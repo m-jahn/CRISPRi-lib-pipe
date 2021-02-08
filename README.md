@@ -1,2 +1,45 @@
-# CRISPRi-lib-pipe
+CRISPRi-lib-pipe
+================================
+Michael Jahn, Kiyan Shabestary
+
+### Description
+
 Pipeline to process CRISPRi library sequencing data
+
+### Prerequisites
+
+- `bs-cp` tool from Illumina (optional)
+- `bcl2fastq` for NGS file conversion (optional)
+- sickle (`sudo apt install sickle` on linux)
+- sequencing data in `fastq.gz` format (compressed)
+
+
+### Usage
+
+#### Step 1: Retrieving data from Illumina basespace *via* command line (optional)
+
+Data in form of `*.fastq` files can be manually downloaded from the basespace website on MacOS or Windows.
+For Linux systems, only the command line option is available via Illumina's basespace client `bs-cp`. Files are in Illumina's proprietary format. Execute the following line in a terminal and replace `<your-run-ID>` with the number you will find in the URL of your browser. For example, log in to basespace, navigate to `runs`, select a sequencing run and copy the ID you find in the URL: `https://basespace.illumina.com/run/200872678/details`.
+
+```
+bs-cp -v https://basespace.illumina.com/Run/<your-run-ID> /your/target/directory/
+```
+
+The data must then be converted to `*.fastq` (plain text) files using Illumina's `bcl2fastq` tool. If it complains about indices being too similar to demultiplex, the command has to be executed with option `--barcode-mismatches 0`.
+
+```
+cd /your/target/directory/
+bcl2fastq
+```
+
+The gzipped `*.fastq.gz` files will be stored in `./Data/Intensities/BaseCalls/`. To merge several lanes or replicates of the same sample into a new `*.fastq.gz` file, run the following script. Input and output folder can be specified (default is current directory `./`).
+
+```
+cd data/
+../source/merge_fastq_files.sh
+```
+
+#### Step 2: Pipeline for read trimming, mapping and summarizing
+
+
+
