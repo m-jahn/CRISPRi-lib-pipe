@@ -35,11 +35,21 @@ bcl2fastq
 The gzipped `*.fastq.gz` files will be stored in `./Data/Intensities/BaseCalls/`. To merge several lanes or replicates of the same sample into a new `*.fastq.gz` file, run the following script. Input and output folder can be specified (default is current directory `./`).
 
 ```
-cd data/
-../source/merge_fastq_files.sh
+cd data/fastq/
+../../source/merge_fastq_files.sh
 ```
 
 #### Step 2: Pipeline for read trimming, mapping and summarizing
 
+This script filters reads using `sickle`, maps reads to a genome reference, and summarizes read counts in single table. The script takes the following optional input parameters:
 
+- `input_dir` (default `./`)
+- `output_dir` (default `./`)
+- `pattern` -- the file name pattern to look for (default `.fastq.gz`)
+- `read_length` -- expected read length for `sickle` (default: `75`)
 
+The following example processes a selected `fastq.gz` file from the `data/fastq/`) directory. The pattern to select files can be a regular expression. The output is a filtered fastq.gz file.
+
+```
+source/map_reads.sh --input_dir data/fastq/ --pattern R1.fastq.gz --output_dir data/filtered/
+```

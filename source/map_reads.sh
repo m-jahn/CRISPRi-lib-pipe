@@ -7,6 +7,8 @@
 input_dir=${input_dir:-"./"}
 output_dir=${output_dir:-"./"}
 pattern=${pattern:-".fastq.gz"}
+read_length=${read_length:-75}
+
 
 # assign optional parameters that were passed with "--"
 while [ $# -gt 0 ]; do
@@ -16,6 +18,7 @@ while [ $# -gt 0 ]; do
   fi
   shift
 done
+
 
 # if in and output folders are not present, throw error
 for dir in $input_dir $output_dir
@@ -28,22 +31,21 @@ do
   fi
 done
 
-# step 1: trim reads using sickle
+
+# step 1: trim reads using sickle and align to reference
 ls ${input_dir} | grep ${pattern} | while read fastq;
   do
-    # extract ID of fastq.gz file
-    ID=`echo ${fastq} | cut -f 1 -d \.`
+    # extract name of fastq.gz file
+    filename=`echo ${fastq} | cut -f 1 -d \.`
+    # run sickle and save file to target directory
+    # sickle options are:
+    #  -f fastq input file; -o output file; se single-end;
+    #  -l expected read length; -n trailing truncated sequences with Ns
+    #  -t type of quality score; -g ??
+    sickle se -g -n -l ${read_length} -f ${input_dir}/${fastq} -t sanger \
+      -o ${output_dir}/${filename}_filtered.fastq.gz
+    # next step is to map reads to reference
+    # TODO: enter python script map_reads.py here -->
     
-    # perl ${MAPTN} \
-    #   -stepSize ${stepSize} -tileSize ${tileSize} \
-    #   -genome ${REF}.fna \
-    #   -model ${MODEL} \
-    #   -first ${FASTQ}/${fastq} \
-    #   -unmapped ${OUT}/${ID}_unmapped.txt \
-    #   -trunc ${OUT}/${ID}_truncated.txt \
-    #   > ${OUT}${ID}.tsv
-  done  | parallel --no-notice --bar
+  done #  | parallel --no-notice --bar
 
-
-Outfile=`echo "filtered/{}" | cut -f 1 -d \. | sed -e "s/$/.filtered.fastq.gz/"`
-sickle se -g –n -l 75 -f {} -t sanger -o $Outfile
