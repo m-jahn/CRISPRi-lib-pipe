@@ -32,11 +32,14 @@ cd /your/target/directory/
 bcl2fastq
 ```
 
-The gzipped `*.fastq.gz` files will be stored in `./Data/Intensities/BaseCalls/`. To merge several lanes or replicates of the same sample into a new `*.fastq.gz` file, run the following script. Input and output folder can be specified (default is current directory `./`).
+The gzipped `*.fastq.gz` files will be stored in `./Data/Intensities/BaseCalls/`. To merge several lanes or replicates of the same sample into a new `*.fastq.gz` file, run the following script. Input and output folder can be specified with the following optional parameters (the default is current directory `./`):
+
+- `input_dir` - input directory
+- `output_dir` - - output directory
+- `file_ext` - file extension of the target files (default: `fastq.gz`)
 
 ```
-cd data/fastq/
-../../source/merge_fastq_files.sh
+source/merge_fastq_files.sh --input_dir data/fastq/ --output_dir data/fastq/
 ```
 
 #### Step 2: Pipeline for read trimming, mapping and summarizing

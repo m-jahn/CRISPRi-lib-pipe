@@ -8,7 +8,7 @@
 # optional input parameters
 input_dir=${input_dir:-"./"}
 output_dir=${output_dir:-"./"}
-ext=${ext:-"fastq.gz"}
+file_ext=${file_ext:-"fastq.gz"}
 
 # assign optional parameters that were passed with "--"
 while [ $# -gt 0 ]; do
@@ -26,18 +26,25 @@ do
 	  echo "Input/Output directory: ${dir} exists"
   else
     echo "ERROR: Input/Output directory: ${dir} does not exist, stopping."
-      exit 9
+      exit
   fi
 done
 
+# make list of target files
+filenames=(`ls ${input_dir} | grep ${file_ext}`)
+#echo ${filenames[@]}
+echo "Input files matching pattern: ${#filenames[@]}"
+if [ ${#filenames[@]} == 0 ]; then
+  echo "Found no files to process. Exiting."
+  exit
+fi
 
-# Loop files in {input_dir} with extension {ext}
-for sample_file in ${input_dir}/*_*.${ext};
+# loop through target files and merge to new files
+for sample_file in ${filenames[@]};
 do
-  sample_name=$(basename "$sample_file"   | sed -e "s#_S[0-9]*_L00[1-4]_R[1-2]_001.fastq.gz##")
-  sample_index=$(basename "$sample_file"  | grep -o "_S[0-9]*_L00[1-4]_R[1-2]_001.fastq.gz" | grep -o "_S[0-9]*")
-  sample_strand=$(basename "$sample_file" | grep -o "_S[0-9]*_L00[1-4]_R[1-2]_001.fastq.gz" | grep -o "_R[1-2]")
-  
-  echo " > Adding $sample_file to ${sample_name}${sample_index}${sample_strand}.${ext}";
-  cat $sample_file >> ${output_dir}/${sample_name}${sample_index}${sample_strand}.${ext};
+  sample_name=$(basename "$sample_file"   | sed -e "s#_S[0-9]*_L00[1-4]_R[1-2]_001.${file_ext}##")
+  sample_index=$(basename "$sample_file"  | grep -o  "_S[0-9]*_L00[1-4]_R[1-2]_001.${file_ext}" | grep -o "_S[0-9]*")
+  sample_strand=$(basename "$sample_file" | grep -o  "_S[0-9]*_L00[1-4]_R[1-2]_001.${file_ext}" | grep -o "_R[1-2]")
+  echo " > Adding $sample_file to ${sample_name}${sample_index}${sample_strand}.${file_ext}";
+  cat ${input_dir}/$sample_file >> ${output_dir}/${sample_name}${sample_index}${sample_strand}.${file_ext};
 done
