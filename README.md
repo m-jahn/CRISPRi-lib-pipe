@@ -54,7 +54,7 @@ This script filters reads using `sickle`, maps reads to a sgRNA library referenc
 - `ref_file` -- reference library file for reads assignment (default: `Syn20.txt`)
 - `result_file` -- file name for final tab-separated table (default: `results.tsv`)
 
-The following example processes a selected `fastq.gz` file from the `data/fastq/`) directory. The pattern to select files can be a regular expression. The output is a filtered fastq.gz file.
+The following example processes `fastq.gz` files from the `data/fastq/`) directory. The output are filtered `fastq.gz` files, `counts.txt` files with read counts per sample, and a summary table `results.tsv` for counts of _all_ samples.
 
 ```
 source/map_reads.sh --input_dir data/fastq/ --output_dir data/output/ --ref_file Syn20.txt

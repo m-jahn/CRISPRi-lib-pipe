@@ -458,7 +458,7 @@ bcl2fastq</code></pre>
 <li><code>ref_file</code> – reference library file for reads assignment (default: <code>Syn20.txt</code>)</li>
 <li><code>result_file</code> – file name for final tab-separated table (default: <code>results.tsv</code>)</li>
 </ul>
-<p>The following example processes a selected <code>fastq.gz</code> file from the <code>data/fastq/</code>) directory. The pattern to select files can be a regular expression. The output is a filtered fastq.gz file.</p>
+<p>The following example processes <code>fastq.gz</code> files from the <code>data/fastq/</code>) directory. The output are filtered <code>fastq.gz</code> files, <code>counts.txt</code> files with read counts per sample, and a summary table <code>results.tsv</code> for counts of <em>all</em> samples.</p>
 <pre><code>source/map_reads.sh --input_dir data/fastq/ --output_dir data/output/ --ref_file Syn20.txt</code></pre>
 </div>
 </div>
