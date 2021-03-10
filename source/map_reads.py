@@ -1,5 +1,7 @@
 #!usr/bin/ncbi-blast-2.6.0+
-#This script intends to map reads from deep sequencing to our sgRNA library. This script is run in sgRNA_Library/seqdata/scripts. KS
+# This script intends to map reads from NGS sequencing to a sgRNA library.
+# Author: Kiyan Shabestary
+# Date: 2021-03-10
 
 import sys
 import datetime
@@ -79,8 +81,8 @@ def main():
 	library_file = str(sys.argv[2])
 
 
-	seq_data_file = 'data/filtered/' + sample_name
-	counts_file = 'data/counts/' +sample_name.split('.fastq')[0]+'.txt' 
+	seq_data_file = sample_name
+	counts_file = sample_name.split('.fastq')[0]+'_counts.txt'
 
 	library=read_library(library_file)
 	alignment_results=map_reads(library,seq_data_file)

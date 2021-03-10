@@ -33,7 +33,7 @@ cd /your/target/directory/
 bcl2fastq
 ```
 
-The gzipped `*.fastq.gz` files will be stored in `./Data/Intensities/BaseCalls/`. To merge several lanes or replicates of the same sample into a new `*.fastq.gz` file, run the following script. Input and output folder can be specified with the following optional parameters (the default is current directory `./`):
+The gzipped `*.fastq.gz` files will be stored in `./Data/Intensities/BaseCalls/`. To merge several lanes or replicates of the same sample into a new `*.fastq.gz` file, run the following script. The script merges files matching the pattern `_S[0-9]*_L00[1-4]_R[1-2]_001`. Input and output folder can be specified with the following optional parameters (the default is current directory `./`).
 
 - `input_dir` - input directory
 - `output_dir` - - output directory
@@ -52,10 +52,10 @@ This script filters reads using `sickle`, maps reads to a sgRNA library referenc
 - `pattern` -- the file name pattern to look for (default `.fastq.gz`)
 - `read_length` -- expected read length for `sickle` (default: `75`)
 - `ref_file` -- reference library file for reads assignment (default: `Syn20.txt`)
-- `table_file` -- file name for final table (default: `results.txt`)
+- `result_file` -- file name for final tab-separated table (default: `results.tsv`)
 
 The following example processes a selected `fastq.gz` file from the `data/fastq/`) directory. The pattern to select files can be a regular expression. The output is a filtered fastq.gz file.
 
 ```
-source/map_reads.sh --input_dir data/fastq/ --pattern R1.fastq.gz --output_dir data/filtered/ --ref_file Syn20.txt
+source/map_reads.sh --input_dir data/fastq/ --output_dir data/output/ --ref_file Syn20.txt
 ```

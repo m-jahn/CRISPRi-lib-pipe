@@ -9,7 +9,7 @@ output_dir=${output_dir:-"./"}
 pattern=${pattern:-".fastq.gz"}
 read_length=${read_length:-75}
 ref_file=${ref_file:-"Syn20.txt"}
-table_file=${table_file:-"results.txt"}
+result_file=${result_file:-"results.tsv"}
 
 # assign optional parameters that were passed with "--"
 while [ $# -gt 0 ]; do
@@ -48,11 +48,11 @@ ls ${input_dir} | grep ${pattern} | while read fastq;
     # Decompress the reads file using gunzip
     gunzip -k ${output_dir}${filename}_filtered.fastq.gz
     # Assign reads to reference library file
-    python source/map_reads.py ${filename}_filtered.fastq ./reference/${ref_file}
+    python source/map_reads.py ${output_dir}${filename}_filtered.fastq ./ref/${ref_file}
     
-  done #  | parallel --no-notice --bar
+  done # | parallel --no-notice --bar
 
 # Sumarize in single table file
-python source/make_long_format.py ./data/table/table_file
+python source/make_long_format.py ${output_dir} ${result_file}
 
 
