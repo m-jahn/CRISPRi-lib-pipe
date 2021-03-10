@@ -12,6 +12,7 @@ Pipeline to process CRISPRi library sequencing data
 - `bcl2fastq` for NGS file conversion (optional)
 - sickle (`sudo apt install sickle` on linux)
 - sequencing data in `fastq.gz` format (compressed)
+- sgRNA library reference file in text format to assign reads
 
 
 ### Usage
@@ -44,15 +45,17 @@ source/merge_fastq_files.sh --input_dir data/fastq/ --output_dir data/fastq/
 
 #### Step 2: Pipeline for read trimming, mapping and summarizing
 
-This script filters reads using `sickle`, maps reads to a genome reference, and summarizes read counts in single table. The script takes the following optional input parameters:
+This script filters reads using `sickle`, maps reads to a sgRNA library reference, and summarizes read counts in single table. The script takes the following optional input parameters:
 
 - `input_dir` (default `./`)
 - `output_dir` (default `./`)
 - `pattern` -- the file name pattern to look for (default `.fastq.gz`)
 - `read_length` -- expected read length for `sickle` (default: `75`)
+- `ref_file` -- reference library file for reads assignment (default: `Syn20.txt`)
+- `table_file` -- file name for final table (default: `results.txt`)
 
 The following example processes a selected `fastq.gz` file from the `data/fastq/`) directory. The pattern to select files can be a regular expression. The output is a filtered fastq.gz file.
 
 ```
-source/map_reads.sh --input_dir data/fastq/ --pattern R1.fastq.gz --output_dir data/filtered/
+source/map_reads.sh --input_dir data/fastq/ --pattern R1.fastq.gz --output_dir data/filtered/ --ref_file Syn20.txt
 ```

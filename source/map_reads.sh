@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Script to trim, map and summarize sequencing reads obtained from a CRISPRi library
+# Script to trim, map and summarize sequencing reads obtained from a CRISPRi library (Step 2)
 # Authors: Michael Jahn, Kiyan Shabestary
 
 # optional input parameters
@@ -8,7 +8,8 @@ input_dir=${input_dir:-"./"}
 output_dir=${output_dir:-"./"}
 pattern=${pattern:-".fastq.gz"}
 read_length=${read_length:-75}
-
+ref_file=${ref_file:-"Syn20.txt"}
+table_file=${table_file:-"results.txt"}
 
 # assign optional parameters that were passed with "--"
 while [ $# -gt 0 ]; do
@@ -32,7 +33,7 @@ do
 done
 
 
-# step 1: trim reads using sickle and align to reference
+# step 2: trim reads using sickle and align to reference
 ls ${input_dir} | grep ${pattern} | while read fastq;
   do
     # extract name of fastq.gz file
@@ -44,8 +45,14 @@ ls ${input_dir} | grep ${pattern} | while read fastq;
     #  -t type of quality score; -g ??
     sickle se -g -n -l ${read_length} -f ${input_dir}/${fastq} -t sanger \
       -o ${output_dir}/${filename}_filtered.fastq.gz
-    # next step is to map reads to reference
-    # TODO: enter python script map_reads.py here -->
+    # Decompress the reads file using gunzip
+    gunzip -k ${output_dir}${filename}_filtered.fastq.gz
+    # Assign reads to reference library file
+    python source/map_reads.py ${filename}_filtered.fastq ./reference/${ref_file}
     
   done #  | parallel --no-notice --bar
+
+# Sumarize in single table file
+python source/make_long_format.py ./data/table/table_file
+
 
