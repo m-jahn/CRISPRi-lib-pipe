@@ -420,15 +420,25 @@ summary {
 <h3>Description</h3>
 <p>Pipeline to process CRISPRi library sequencing data</p>
 </div>
+<div id="related-publications" class="section level3">
+<h3>Related publications</h3>
+<ul>
+<li>Yao et al., <em>Pooled CRISPRi screening of the cyanobacterium Synechocystis sp PCC 6803 for enhanced industrial phenotypes</em>, <a href="https://www.nature.com/articles/s41467-020-15491-7">Nature Communications</a>, <strong>2020</strong>. Preprint is available at <a href="https://www.biorxiv.org/content/10.1101/823534v2">BioRxiv.org</a>.</li>
+</ul>
+</div>
 <div id="prerequisites" class="section level3">
 <h3>Prerequisites</h3>
 <ul>
 <li><code>bs-cp</code> tool from Illumina (optional)</li>
 <li><code>bcl2fastq</code> for NGS file conversion (optional)</li>
-<li>sickle (<code>sudo apt install sickle</code> on linux)</li>
-<li>sequencing data in <code>fastq.gz</code> format (compressed)</li>
-<li>sgRNA library reference file in text format to assign reads</li>
+<li><a href="https://github.com/najoshi/sickle">sickle</a>, <a href="http://bowtie-bio.sourceforge.net/bowtie2/index.shtml">bowtie2</a>, and <a href="http://www.htslib.org/doc/">samtools</a></li>
+<li>sequencing data in <code>fastq.gz</code> format (gzip compressed)</li>
+<li>sgRNA library reference file in <code>fasta</code> format to assign reads</li>
 </ul>
+<p>On Ubuntu flavored linux you can install the main tools using:</p>
+<pre><code>sudo apt install sickle
+sudo apt install bowtie2
+sudo apt install samtools</code></pre>
 </div>
 <div id="usage" class="section level3">
 <h3>Usage</h3>
@@ -436,10 +446,10 @@ summary {
 <h4>Step 1: Retrieving data from Illumina basespace <em>via</em> command line (optional)</h4>
 <p>Data in form of <code>*.fastq</code> files can be manually downloaded from the basespace website on MacOS or Windows. For Linux systems, only the command line option is available via Illumina’s basespace client <code>bs-cp</code>. Files are in Illumina’s proprietary format. Execute the following line in a terminal and replace <code>&lt;your-run-ID&gt;</code> with the number you will find in the URL of your browser. For example, log in to basespace, navigate to <code>runs</code>, select a sequencing run and copy the ID you find in the URL: <code>https://basespace.illumina.com/run/200872678/details</code>.</p>
 <pre><code>bs-cp -v https://basespace.illumina.com/Run/&lt;your-run-ID&gt; /your/target/directory/</code></pre>
-<p>The data must then be converted to <code>*.fastq</code> (plain text) files using Illumina’s <code>bcl2fastq</code> tool. If it complains about indices being too similar to demultiplex, the command has to be executed with option <code>--barcode-mismatches 0</code>.</p>
+<p>The data must then be converted to <code>*.fastq</code> (plain text) files using Illumina’s <code>bcl2fastq</code> tool. It is recommended to run it with option <code>--no-lane-splitting</code> in order to obtain one file per sample, instead of several files subdivided by lane. If it complains about indices being too similar to demultiplex, the option <code>--barcode-mismatches 0</code> can be added.</p>
 <pre><code>cd /your/target/directory/
-bcl2fastq</code></pre>
-<p>The gzipped <code>*.fastq.gz</code> files will be stored in <code>./Data/Intensities/BaseCalls/</code>. To merge several lanes or replicates of the same sample into a new <code>*.fastq.gz</code> file, run the following script. The script merges files matching the pattern <code>_S[0-9]*_L00[1-4]_R[1-2]_001</code>. Input and output folder can be specified with the following optional parameters (the default is current directory <code>./</code>).</p>
+bcl2fastq --no-lane-splitting</code></pre>
+<p>The gzipped <code>*.fastq.gz</code> files will be stored in <code>./Data/Intensities/BaseCalls/</code>. To merge replicates of the same sample into a new <code>*.fastq.gz</code> file, run the following script. The script merges files matching the pattern <code>_S[0-9]*_L00[1-4]_R[1-2]_001</code>. Input and output folder can be specified with the following optional parameters (the default is current directory <code>./</code>).</p>
 <ul>
 <li><code>input_dir</code> - input directory</li>
 <li><code>output_dir</code> - - output directory</li>
@@ -447,19 +457,18 @@ bcl2fastq</code></pre>
 </ul>
 <pre><code>source/merge_fastq_files.sh --input_dir data/fastq/ --output_dir data/fastq/</code></pre>
 </div>
-<div id="step-2-pipeline-for-read-trimming-mapping-and-summarizing" class="section level4">
-<h4>Step 2: Pipeline for read trimming, mapping and summarizing</h4>
-<p>This script filters reads using <code>sickle</code>, maps reads to a sgRNA library reference, and summarizes read counts in single table. The script takes the following optional input parameters:</p>
+<div id="step-2-pipeline-for-read-trimming-and-mapping-to-reference" class="section level4">
+<h4>Step 2: Pipeline for read trimming and mapping to reference</h4>
+<p>This script filters reads using <code>sickle</code>, and maps them to the sgRNA library reference. The script takes the following (optional) input parameters:</p>
 <ul>
 <li><code>input_dir</code> (default <code>./</code>)</li>
 <li><code>output_dir</code> (default <code>./</code>)</li>
 <li><code>pattern</code> – the file name pattern to look for (default <code>.fastq.gz</code>)</li>
 <li><code>read_length</code> – expected read length for <code>sickle</code> (default: <code>75</code>)</li>
-<li><code>ref_file</code> – reference library file for reads assignment (default: <code>Syn20.txt</code>)</li>
-<li><code>result_file</code> – file name for final tab-separated table (default: <code>results.tsv</code>)</li>
+<li><code>ref_file</code> – reference library file for reads assignment (default: <code>./ref/Synechocystis_v2.fasta</code>)</li>
 </ul>
-<p>The following example processes <code>fastq.gz</code> files from the <code>data/fastq/</code>) directory. The output are filtered <code>fastq.gz</code> files, <code>counts.txt</code> files with read counts per sample, and a summary table <code>results.tsv</code> for counts of <em>all</em> samples.</p>
-<pre><code>source/map_reads.sh --input_dir data/fastq/ --output_dir data/output/ --ref_file Syn20.txt</code></pre>
+<p>The following example processes <code>fastq.gz</code> files from the <code>data/fastq/</code>) directory. Output are filtered <code>fastq.gz</code> files, <code>.bam</code> alignment files, and <code>counts.tsv</code> summary tables, one for each input file.</p>
+<pre><code>source/map_reads.sh --input_dir data/fastq/ --output_dir data/output/</code></pre>
 </div>
 </div>
 </div>

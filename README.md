@@ -6,14 +6,27 @@ Michael Jahn, Kiyan Shabestary
 
 Pipeline to process CRISPRi library sequencing data
 
+### Related publications
+
+- Yao et al., *Pooled CRISPRi screening of the cyanobacterium Synechocystis sp PCC 6803 for enhanced industrial phenotypes*, [Nature Communications](https://www.nature.com/articles/s41467-020-15491-7), **2020**. Preprint is available at [BioRxiv.org](https://www.biorxiv.org/content/10.1101/823534v2).
+
 ### Prerequisites
 
 - `bs-cp` tool from Illumina (optional)
 - `bcl2fastq` for NGS file conversion (optional)
-- sickle (`sudo apt install sickle` on linux)
-- sequencing data in `fastq.gz` format (compressed)
-- sgRNA library reference file in text format to assign reads
+- [sickle](https://github.com/najoshi/sickle),
+  [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml), 
+  and [samtools](http://www.htslib.org/doc/)
+- sequencing data in `fastq.gz` format (gzip compressed)
+- sgRNA library reference file in `fasta` format to assign reads
 
+On Ubuntu flavored linux you can install the main tools using:
+
+```
+sudo apt install sickle
+sudo apt install bowtie2
+sudo apt install samtools
+```
 
 ### Usage
 
@@ -26,14 +39,14 @@ For Linux systems, only the command line option is available via Illumina's base
 bs-cp -v https://basespace.illumina.com/Run/<your-run-ID> /your/target/directory/
 ```
 
-The data must then be converted to `*.fastq` (plain text) files using Illumina's `bcl2fastq` tool. If it complains about indices being too similar to demultiplex, the command has to be executed with option `--barcode-mismatches 0`.
+The data must then be converted to `*.fastq` (plain text) files using Illumina's `bcl2fastq` tool. It is recommended to run it with option `--no-lane-splitting` in order to obtain one file per sample, instead of several files subdivided by lane. If it complains about indices being too similar to demultiplex, the option `--barcode-mismatches 0` can be added.
 
 ```
 cd /your/target/directory/
-bcl2fastq
+bcl2fastq --no-lane-splitting
 ```
 
-The gzipped `*.fastq.gz` files will be stored in `./Data/Intensities/BaseCalls/`. To merge several lanes or replicates of the same sample into a new `*.fastq.gz` file, run the following script. The script merges files matching the pattern `_S[0-9]*_L00[1-4]_R[1-2]_001`. Input and output folder can be specified with the following optional parameters (the default is current directory `./`).
+The gzipped `*.fastq.gz` files will be stored in `./Data/Intensities/BaseCalls/`. To merge replicates of the same sample into a new `*.fastq.gz` file, run the following script. The script merges files matching the pattern `_S[0-9]*_L00[1-4]_R[1-2]_001`. Input and output folder can be specified with the following optional parameters (the default is current directory `./`).
 
 - `input_dir` - input directory
 - `output_dir` - - output directory
@@ -43,19 +56,18 @@ The gzipped `*.fastq.gz` files will be stored in `./Data/Intensities/BaseCalls/`
 source/merge_fastq_files.sh --input_dir data/fastq/ --output_dir data/fastq/
 ```
 
-#### Step 2: Pipeline for read trimming, mapping and summarizing
+#### Step 2: Pipeline for read trimming and mapping to reference
 
-This script filters reads using `sickle`, maps reads to a sgRNA library reference, and summarizes read counts in single table. The script takes the following optional input parameters:
+This script filters reads using `sickle`, and maps them to the sgRNA library reference. The script takes the following (optional) input parameters:
 
 - `input_dir` (default `./`)
 - `output_dir` (default `./`)
 - `pattern` -- the file name pattern to look for (default `.fastq.gz`)
 - `read_length` -- expected read length for `sickle` (default: `75`)
-- `ref_file` -- reference library file for reads assignment (default: `Syn20.txt`)
-- `result_file` -- file name for final tab-separated table (default: `results.tsv`)
+- `ref_file` -- reference library file for reads assignment (default: `./ref/Synechocystis_v2.fasta`)
 
-The following example processes `fastq.gz` files from the `data/fastq/`) directory. The output are filtered `fastq.gz` files, `counts.txt` files with read counts per sample, and a summary table `results.tsv` for counts of _all_ samples.
+The following example processes `fastq.gz` files from the `data/fastq/`) directory. Output are filtered `fastq.gz` files, `.bam` alignment files, and `counts.tsv` summary tables, one for each input file.
 
 ```
-source/map_reads.sh --input_dir data/fastq/ --output_dir data/output/ --ref_file Syn20.txt
+source/map_reads.sh --input_dir data/fastq/ --output_dir data/output/
 ```

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Script to trim, map and summarize sequencing reads obtained from a CRISPRi library (Step 2)
+# Script to trim, map and summarize sequencing reads obtained from a CRISPRi library
 # Authors: Michael Jahn, Kiyan Shabestary
 
 # optional input parameters
@@ -8,8 +8,7 @@ input_dir=${input_dir:-"./"}
 output_dir=${output_dir:-"./"}
 pattern=${pattern:-".fastq.gz"}
 read_length=${read_length:-75}
-ref_file=${ref_file:-"Syn20.txt"}
-result_file=${result_file:-"results.tsv"}
+ref_file=${ref_file:-"./ref/Synechocystis_v2.fasta"}
 
 # assign optional parameters that were passed with "--"
 while [ $# -gt 0 ]; do
@@ -32,27 +31,40 @@ do
   fi
 done
 
+# use bowtie2 to build a search index from a reference genome;
+# option -q = quiet
+bowtie2-build -q ${ref_file} ${ref_file}_index
 
-# step 2: trim reads using sickle and align to reference
+# main loop through each fastq file
 ls ${input_dir} | grep ${pattern} | while read fastq;
   do
     # extract name of fastq.gz file
     filename=`echo ${fastq} | cut -f 1 -d \.`
-    # run sickle and save file to target directory
+    
+    # STEP 1: trim reads using sickle
     # sickle options are:
     #  -f fastq input file; -o output file; se single-end;
     #  -l expected read length; -n trailing truncated sequences with Ns
     #  -t type of quality score; -g ??
     sickle se -g -n -l ${read_length} -f ${input_dir}/${fastq} -t sanger \
       -o ${output_dir}/${filename}_filtered.fastq.gz
-    # Decompress the reads file using gunzip
-    gunzip -k ${output_dir}${filename}_filtered.fastq.gz
-    # Assign reads to reference library file
-    python source/map_reads.py ${output_dir}${filename}_filtered.fastq ./ref/${ref_file}
     
-  done # | parallel --no-notice --bar
-
-# Sumarize in single table file
-python source/make_long_format.py ${output_dir} ${result_file}
-
-
+    # STEP 2: map reads to reference library file using bowtie2 and samtools
+    # invoke bowtie2 to align reads to reference; useful options:
+    #   -x, path to index files
+    #   -U, unparied reads to be aligned
+    #   -p, launches a specified number of parallel search threads
+    #   --local, local alignment allows trimming of read to match reference, not exact length
+    #   --un <path>, write unpaired reads that fail to align to file at <path>
+    # output from bowtie2 is SAM alignment, gets piped to samtools to sort and convert to BAM file
+    bowtie2 -x ${ref_file}_index \
+      -U ${output_dir}${filename}_filtered.fastq.gz | \
+      samtools view -h | \
+      samtools sort -O BAM \
+      > ${output_dir}${filename}_filtered.bam
+    
+    # summarize read counts in table
+    samtools coverage ${output_dir}${filename}_filtered.bam \
+      -o ${output_dir}${filename}_counts.tsv
+  
+  done
