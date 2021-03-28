@@ -1,0 +1,5 @@
+file_name	condition	replicate	date	time	group	reference_group
+Example_S1_L001_R1.fastq.gz	cond_A	1	2021-03-26	0	1	1
+Example_S1_L001_R2.fastq.gz	cond_A	2	2021-03-26	0	1	1
+Example_S2_L001_R1.fastq.gz	cond_B	1	2021-03-26	0	2	1
+Example_S2_L001_R2.fastq.gz	cond_B	2	2021-03-26	0	2	1

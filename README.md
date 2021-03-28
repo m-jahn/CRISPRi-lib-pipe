@@ -71,3 +71,26 @@ The following example processes `fastq.gz` files from the `data/fastq/`) directo
 ```
 source/map_reads.sh --input_dir data/fastq/ --output_dir data/output/
 ```
+
+#### Step 3:  Quantify differential abundance (DESeq2) and calculate fitness score
+
+This step summarizes count tables per sample to one main table, adds statistical metrics for a pairwise sample comparison using DESeq2, and calculates fitness scores per gene and condition. Mandatory inputs are 1) the `counts.tsv` files from the previous step, and a tab-separated sample annotation table, `metadata.tsv`. This structure of this table is shown below. Two columns are particularly important, `group` and `reference_group`. These columns define the condition to which each sample belongs, and to which this condition should be compared to, in order to obtain statistics like log2 fold change and p-value. The `time` column is used to calculate fitness score over a number of generations (other `time` units are possible too as long as the input is numeric). If only one time point is supplied for all samples, fitness calculation is omitted.
+
+```
+file_name                   condition replicate date        time group reference_group
+Example_S1_L001_R1.fastq.gz cond_A            1 2021-03-26     0     1               1
+Example_S1_L001_R2.fastq.gz cond_A            2 2021-03-26     0     1               1
+Example_S2_L001_R1.fastq.gz cond_B            1 2021-03-26     0     2               1
+Example_S2_L001_R2.fastq.gz cond_B            2 2021-03-26     0     2               1
+```
+
+To run the analysis on a set of `counts.tsv` files, specify the input folder and the path to `metadata.tsv`. Output from the pipeline is the processed summary table in `.Rdata` format (memory-efficient), and a summary page with QC plots, `sample_summary.png`. These files are saved to the folder specified with `--counts_dir`.
+
+```
+source/calculate_gene_fitness.sh --metadata_dir data/fastq/ --counts_dir data/output/
+```
+
+QC summary page for the example data set. It is not very interesting as it contains only 4 samples for 2 conditions, 10,000 reads per sample.
+
+<img src="data/output/sample_summary.png" width="500px" style="display: block; margin: auto;" />
+
