@@ -75,7 +75,7 @@ source/map_reads.sh --input_dir data/fastq/ --output_dir data/output/
 
 #### Step 3:  Quantify differential abundance (DESeq2) and calculate fitness score
 
-This step summarizes count tables per sample to one main table, adds statistical metrics for a pairwise sample comparison using DESeq2, and calculates fitness scores per gene and condition. Mandatory inputs are 1) the `counts.tsv` files from the previous step, and a tab-separated sample annotation table, `metadata.tsv`. This structure of this table is shown below. Two columns are particularly important, `group` and `reference_group`. These columns define the condition to which each sample belongs, and to which this condition should be compared to, in order to obtain statistics like log2 fold change and p-value. The `time` column is used to calculate fitness score over a number of generations (other `time` units are possible too as long as the input is numeric). If only one time point is supplied for all samples, fitness calculation is omitted.
+This step summarizes count tables per sample to one main table, adds statistical metrics for a pairwise sample comparison using DESeq2, and calculates fitness scores per gene and condition. Mandatory inputs are 1) the `counts.tsv` files from the previous step, and a tab-separated sample annotation table, `metadata.tsv`. The structure of this table is shown here: 
 
 ```
 file_name                   condition replicate date        time group reference_group
@@ -84,6 +84,8 @@ Example_S1_L001_R2.fastq.gz cond_A            2 2021-03-26     0     1          
 Example_S2_L001_R1.fastq.gz cond_B            1 2021-03-26     0     2               1
 Example_S2_L001_R2.fastq.gz cond_B            2 2021-03-26     0     2               1
 ```
+
+The entries in the `file_name` column correspond to the names of the `fastq`/`counts.tsv` files. Two more columns are particularly important, `group` and `reference_group`. These columns define the condition to which each sample belongs, and to which this condition should be compared to, in order to obtain statistics like log2 fold change and p-value. The `time` column is used to calculate fitness score over a number of generations (other `time` units are possible too as long as the input is numeric). If only one time point is supplied for all samples, fitness calculation is omitted. The zero time point should normally be identical with the reference condition
 
 To run the analysis on a set of `counts.tsv` files, specify the input folder and the path to `metadata.tsv`. The main output from the pipeline are two tables in `.Rdata` format (memory-efficient), `DESeq2_result.Rdata` and `DESeq2_intermediate.Rdata`. The first one is the main result table containing the final statistics for desired comparisons. In addition, summary plots for number of reads per sample, per sgRNA, number of quantified sgRNAs per sample, and a volcano plot for log2 FC versus negative log10 p-value are exported in `.pdf` format. All files are saved to the folder specified with `--counts_dir`.
 

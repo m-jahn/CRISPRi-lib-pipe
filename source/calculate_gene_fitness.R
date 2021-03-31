@@ -32,6 +32,7 @@ df_metadata <- read_tsv(paste0(metadata_dir, "metadata.tsv"), col_types = cols()
   mutate(group = factor(`group`)) %>%
   column_to_rownames("file_name")
 cat("Input:", nrow(df_metadata), "files listed in meta data table.\n")
+stopifnot(is.numeric(df_metadata$time))
 
 # Step 2: Load read counts
 df_counts <- lapply(row.names(df_metadata), function(x) {
@@ -45,7 +46,8 @@ df_counts <- lapply(row.names(df_metadata), function(x) {
 cat("Number of sgRNAs detected in n samples:\n")
 df_counts %>% group_by(sgRNA) %>%
   summarize(sgRNAs_detected_in_samples = sum(numreads > 0)) %>%
-  count(sgRNAs_detected_in_samples) %>% 
+  count(sgRNAs_detected_in_samples) %>%
+  mutate(percent_total = n/sum(n)*100) %>%
   arrange(desc(sgRNAs_detected_in_samples)) %>%
   print
 
@@ -92,11 +94,12 @@ DESeq_result <- DESeqDataSetFromMatrix(
 # a list of condition and reference pairs is set up from meta data
 combinations <- df_metadata %>%
   select(group, reference_group) %>%
+  filter(group != reference_group) %>%
   mutate(across(.cols = everything(), .fns = as.character)) %>%
   distinct %>% as.list %>% transpose
 
 # extract results for desired combinations
-DESeq_result_table <- lapply(combinations[2], function(l) {
+DESeq_result_table <- lapply(combinations, function(l) {
   results(DESeq_result, contrast = c("group", l$group, l$reference_group),
     parallel = TRUE, tidy = TRUE) %>% 
     as_tibble %>% mutate(group = l$group) %>% rename(sgRNA = row)
