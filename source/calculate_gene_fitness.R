@@ -29,8 +29,8 @@ counts_dir <- args[2]
 # Step 1: Load sample layout sheet - file names must be row names
 df_metadata <- read_tsv(paste0(metadata_dir, "metadata.tsv"), col_types = cols()) %>%
   mutate(file_name = gsub(".fastq.gz$", "", file_name)) %>%
-  column_to_rownames("file_name") %>%
-  mutate(group = factor(group))
+  mutate(group = factor(`group`)) %>%
+  column_to_rownames("file_name")
 cat("Input:", nrow(df_metadata), "files listed in meta data table.\n")
 
 # Step 2: Load read counts
@@ -189,6 +189,7 @@ plot_volcano <- DESeq_result_table %>%
 # EXPORT PROCESSED DATA + REPORT
 # ==============================
 #
+cat("Saving plots to", counts_dir, ".\n")
 pdf(file = paste0(counts_dir, "plot_read_count.pdf"), paper = "a4")
 plot_read_count
 dev.off()
