@@ -169,8 +169,16 @@ plot_unique_sgRNAs <- df_counts %>%
   geom_col(width = 0.5, fill = "white", color = 1) +
   custom_theme
 
+# QC PLOT 3: Number of total sgRNAs per sample
+plot_total_sgRNAs <- df_counts %>% 
+  group_by(file_name) %>%
+  summarize(`total sgRNAs per sample` = sum(numreads)) %>%
+  # barchart
+  ggplot(aes(y = file_name, x = `total sgRNAs per sample`)) + 
+  geom_col(width = 0.5, fill = "white", color = 1) +
+  custom_theme
 
-# QC PLOT 3: Volcano plot;log2 FC on x axis and and negative log10 p-value y-axis
+# QC PLOT 4: Volcano plot;log2 FC on x axis and and negative log10 p-value y-axis
 # showing the most significantly _and_ strongly changed individuals 
 plot_volcano <- DESeq_result_table %>%
   ggplot(aes(y = -log10(padj), x = log2FoldChange)) + 
@@ -181,19 +189,23 @@ plot_volcano <- DESeq_result_table %>%
 # EXPORT PROCESSED DATA + REPORT
 # ==============================
 #
-cat("Saving 'sample_summary.png' and 'processed_result.Rdata' to", counts_dir, ".\n")
+pdf(file = paste0(counts_dir, "plot_read_count.pdf"), paper = "a4")
+plot_read_count
+dev.off()
 
-# Arrange plots on page and export to PNG
-plot_size = 4+ceiling(sqrt(nrow(df_metadata)))
-png(filename = paste0(counts_dir, "sample_summary.png"), 
-  width = plot_size*120, height = plot_size*150, res = 120)
-gridExtra::grid.arrange(
-  plot_read_count,
-  plot_unique_sgRNAs,
-  plot_volcano,
-  layout_matrix = matrix(c(1,2,3,3), ncol = 2, byrow = TRUE)
-)
+pdf(file = paste0(counts_dir, "plot_unique_sgRNAs.pdf"), paper = "a4")
+plot_unique_sgRNAs
+dev.off()
+
+pdf(file = paste0(counts_dir, "plot_total_sgRNAs.pdf"), paper = "a4")
+plot_total_sgRNAs
+dev.off()
+
+pdf(file = paste0(counts_dir, "plot_volcano.pdf"), paper = "a4")
+plot_volcano
 dev.off()
 
 # Save result table to output folder, in Rdata format
-save(DESeq_result_table, file = paste0(counts_dir, "processed_result.Rdata"))
+cat("Saving 'DESeq2_result.Rdata' and 'DESeq2_intermediate.Rdata' to", counts_dir, ".\n")
+save(DESeq_result_table, file = paste0(counts_dir, "DESeq2_result.Rdata"))
+save(DESeq_result, file = paste0(counts_dir, "DESeq2_intermediate.Rdata"))

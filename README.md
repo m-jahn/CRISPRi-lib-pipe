@@ -16,7 +16,7 @@ Pipeline to process CRISPRi library sequencing data
 - `bcl2fastq` for NGS file conversion (optional)
 - [sickle](https://github.com/najoshi/sickle),
   [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml), 
-  and [samtools](http://www.htslib.org/doc/)
+  and [samtools](http://www.htslib.org/doc/) >= 1.10
 - sequencing data in `fastq.gz` format (gzip compressed)
 - sgRNA library reference file in `fasta` format to assign reads
 
@@ -84,13 +84,13 @@ Example_S2_L001_R1.fastq.gz cond_B            1 2021-03-26     0     2          
 Example_S2_L001_R2.fastq.gz cond_B            2 2021-03-26     0     2               1
 ```
 
-To run the analysis on a set of `counts.tsv` files, specify the input folder and the path to `metadata.tsv`. Output from the pipeline is the processed summary table in `.Rdata` format (memory-efficient), and a summary page with QC plots, `sample_summary.png`. These files are saved to the folder specified with `--counts_dir`.
+To run the analysis on a set of `counts.tsv` files, specify the input folder and the path to `metadata.tsv`. The main output from the pipeline are two tables in `.Rdata` format (memory-efficient), `DESeq2_result.Rdata` and `DESeq2_intermediate.Rdata`. The first one is the main result table containing the final statistics for desired comparisons. In addition, summary plots for number of reads per sample, per sgRNA, number of quantified sgRNAs per sample, and a volcano plot for log2 FC versus negative log10 p-value are exported in `.pdf` format. All files are saved to the folder specified with `--counts_dir`.
 
 ```
 source/calculate_gene_fitness.sh --metadata_dir data/fastq/ --counts_dir data/output/
 ```
 
-QC summary page for the example data set. It is not very interesting as it contains only 4 samples for 2 conditions, 10,000 reads per sample.
+**Example of QC summary** for the example data set. It is not very interesting as it contains only 4 samples for 2 conditions, 10,000 reads per sample.
 
-<img src="data/output/sample_summary.png" width="500px" style="display: block; margin: auto;" />
+<img src="example.png" width="800px" style="display: block; margin: auto;" />
 
