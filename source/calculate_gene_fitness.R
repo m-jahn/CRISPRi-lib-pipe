@@ -118,7 +118,9 @@ DESeq_result_table <- select(df_metadata, -replicate) %>%
   complete(sgRNA, nesting(condition, date, time, group, reference_group)) %>%
   mutate(
     log2FoldChange = replace_na(log2FoldChange, 0),
-    lfcSE = replace_na(lfcSE, 0)
+    lfcSE = replace_na(lfcSE, 0),
+    pvalue = replace_na(pvalue, 1),
+    padj = replace_na(padj, 1)
   )
 
 # CALCULATE FITNESS SCORE
@@ -131,8 +133,8 @@ DESeq_result_table <- select(df_metadata, -replicate) %>%
 # of the cultivations. Requires at least 2 time points
 if (length(unique(DESeq_result_table$time)) > 1) {
   DESeq_result_table <- DESeq_result_table %>%
-    group_by(sgRNA, condition, time) %>%
-    arrange(time) %>%
+    arrange(sgRNA, condition, time) %>%
+    group_by(sgRNA, condition) %>%
     mutate(fitness = DescTools::AUC(time, log2FoldChange)/max(time))
 }
 
@@ -151,63 +153,76 @@ custom_theme$panel.grid.minor = element_line(size = 0.8, linetype = "solid", col
 custom_theme$panel.border = element_rect(linetype = "solid", colour = "black", fill = NA, size = 1.0)
 custom_theme$strip.background = element_rect(fill = grey(0.85))
 custom_theme$strip.text$colour = "black"
-custom_theme$strip.text$size = 12
+custom_theme$strip.text$size = 10
 custom_theme$panel.background = element_blank()
 
 # QC PLOT 1: Read count distribution per sample
 plot_read_count <- df_counts %>%
+  group_by(file_name) %>% slice(1:1000) %>%
   # violinplot
-  ggplot(aes(y = file_name, x = numreads)) + 
+  ggplot(aes(x = file_name, y = log10(numreads))) +
   geom_violin(trim = FALSE) +
+  coord_flip() +
   stat_summary(fun.data = mean_sdl, geom = "pointrange",
     size = 0.7, color = "red") +
   custom_theme
 
 # QC PLOT 2: Number of individual sgRNAs per sample
-plot_unique_sgRNAs <- df_counts %>% 
+plot_unique_sgRNAs <- df_counts %>%
   group_by(file_name) %>%
   summarize(`unique sgRNAs per sample` = sum(numreads > 0)) %>%
   # barchart
-  ggplot(aes(y = file_name, x = `unique sgRNAs per sample`)) + 
+  ggplot(aes(x = file_name, y = `unique sgRNAs per sample`)) + 
   geom_col(width = 0.5, fill = "white", color = 1) +
+  coord_flip() +
   custom_theme
 
-# QC PLOT 3: Number of total sgRNAs per sample
-plot_total_sgRNAs <- df_counts %>% 
+# QC PLOT 3: Number of total reads per sample
+plot_total_reads <- df_counts %>% 
   group_by(file_name) %>%
-  summarize(`total sgRNAs per sample` = sum(numreads)) %>%
+  summarize(`total reads per sample` = sum(numreads)) %>%
   # barchart
-  ggplot(aes(y = file_name, x = `total sgRNAs per sample`)) + 
+  ggplot(aes(x = file_name, y = `total reads per sample`)) + 
   geom_col(width = 0.5, fill = "white", color = 1) +
+  coord_flip() +
   custom_theme
 
 # QC PLOT 4: Volcano plot;log2 FC on x axis and and negative log10 p-value y-axis
-# showing the most significantly _and_ strongly changed individuals 
+# showing the most significantly _and_ strongly changed individuals
 plot_volcano <- DESeq_result_table %>%
+  group_by(condition, time) %>% slice(1:1000) %>%
   ggplot(aes(y = -log10(padj), x = log2FoldChange)) + 
-  geom_point(na.rm = TRUE) +
-  facet_grid(~ condition) +
+  geom_point(na.rm = TRUE, color = grey(0.2, 0.2), size = 1) +
+  facet_wrap(condition ~ time) +
   custom_theme
 
+# QC PLOT 5: Fitness score distribution per condition
+if (length(unique(DESeq_result_table$time)) > 1) {
+  plot_fitness <- DESeq_result_table %>% ungroup %>%
+    select(sgRNA, condition, fitness) %>% distinct() %>%
+    # histogram
+    ggplot(aes(x = fitness)) +
+    geom_histogram(bins = 50) +
+    facet_wrap(~ condition) +
+    custom_theme
+}
 # EXPORT PROCESSED DATA + REPORT
 # ==============================
 #
+# export function
+save_plots <- function(pl) {
+  pdf(file = paste0(counts_dir, pl, ".pdf"), paper = "a4")
+  print(get(pl))
+  dev.off()
+  png(filename = paste0(counts_dir, pl, ".png"), width = 1000, height = 1200, res = 120)
+  print(get(pl))
+  dev.off()
+}
+
 cat("Saving plots to", counts_dir, ".\n")
-pdf(file = paste0(counts_dir, "plot_read_count.pdf"), paper = "a4")
-plot_read_count
-dev.off()
-
-pdf(file = paste0(counts_dir, "plot_unique_sgRNAs.pdf"), paper = "a4")
-plot_unique_sgRNAs
-dev.off()
-
-pdf(file = paste0(counts_dir, "plot_total_sgRNAs.pdf"), paper = "a4")
-plot_total_sgRNAs
-dev.off()
-
-pdf(file = paste0(counts_dir, "plot_volcano.pdf"), paper = "a4")
-plot_volcano
-dev.off()
+for (pl in grep(pattern = "^plot\\_", ls(), value = TRUE)) {
+  save_plots(pl)
+}
 
 # Save result table to output folder, in Rdata format
 cat("Saving 'DESeq2_result.Rdata' and 'DESeq2_intermediate.Rdata' to", counts_dir, ".\n")
