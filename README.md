@@ -17,11 +17,11 @@ Pipeline to process CRISPRi library sequencing data
 - [sickle](https://github.com/najoshi/sickle),
   [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml), 
   and [samtools](http://www.htslib.org/doc/) >= 1.10
-- R >= 4.0, with packages `DESeq2`, `DescTools`, `Hmisc`, `tidyverse`
+- `R` >= 4.0, with packages `DESeq2`, `DescTools`, `Hmisc`, `tidyverse`
 - sequencing data in `fastq.gz` format (gzip compressed)
 - sgRNA library reference file in `fasta` format to assign reads
 
-On Ubuntu flavored linux you can install the main tools using:
+On Ubuntu flavored linux you can install the main tools from the official repositories:
 
 ```
 sudo apt install sickle
@@ -47,14 +47,15 @@ cd /your/target/directory/
 bcl2fastq --no-lane-splitting
 ```
 
-The gzipped `*.fastq.gz` files will be stored in `./Data/Intensities/BaseCalls/`. To merge replicates of the same sample into a new `*.fastq.gz` file, run the following script. The script merges files matching the pattern `_S[0-9]*_L00[1-4]_R[1-2]_001`. Input and output folder can be specified with the following optional parameters (the default is current directory `./`).
+The gzipped `*.fastq.gz` files will be stored in `./Data/Intensities/BaseCalls/`. To merge replicates of the same sample into a new `*.fastq.gz` file, run the following script. The script merges files matching a certain `pattern` into a single new file. Input and output folder can be specified with optional parameters (the default is current directory `./`). New file names are truncated to the part preceding the variable pattern (all characters trailing the pattern are ignored).
 
 - `input_dir` - input directory
 - `output_dir` - - output directory
 - `file_ext` - file extension of the target files (default: `fastq.gz`)
+- `pattern` - all files matching this pattern will be merged (default: `_L00[1-4]_`)
 
 ```
-source/merge_fastq_files.sh --input_dir data/fastq/ --output_dir data/fastq/
+source/merge_fastq_files.sh --input_dir data/fastq/ --output_dir data/fastq/ --pattern _R.
 ```
 
 #### Step 2: Pipeline for read trimming and mapping to reference
