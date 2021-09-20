@@ -19,5 +19,8 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-# this bash script is just a wrapper around an R script that does all the work:
+# perform fitness calculation using the DESeq2 package from Love et al., Genome Biology, 2014
 Rscript source/calculate_gene_fitness.R ${metadata_dir} ${counts_dir}
+
+# this R script performs PCA and generates summary plots
+Rscript source/summary_plots.R ${counts_dir}

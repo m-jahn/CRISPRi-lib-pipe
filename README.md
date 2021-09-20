@@ -76,7 +76,7 @@ source/map_reads.sh --input_dir data/fastq/ --output_dir data/output/
 
 #### Step 3:  Quantify differential abundance (DESeq2) and calculate fitness score
 
-This step summarizes count tables per sample to one main table, adds statistical metrics for a pairwise sample comparison using DESeq2, and calculates fitness scores per gene and condition. Mandatory inputs are 1) the `counts.tsv` files from the previous step, and a tab-separated sample annotation table, `metadata.tsv`. The structure of this table is shown here: 
+This step summarizes count tables per sample to one main table, adds statistical metrics for a pairwise sample comparison using [DESeq2](https://pubmed.ncbi.nlm.nih.gov/25516281/), and calculates fitness scores per gene and condition. Mandatory inputs are 1) the `counts.tsv` files from the previous step, and a tab-separated sample annotation table, `metadata.tsv`. The structure of this table is shown here: 
 
 ```
 file_name                   condition replicate date        time group reference_group
@@ -94,7 +94,13 @@ To run the analysis on a set of `counts.tsv` files, specify the input folder and
 source/calculate_gene_fitness.sh --metadata_dir data/fastq/ --counts_dir data/output/
 ```
 
-**Example of QC summary** for the example data set. It is not very interesting as it contains only 4 samples for 2 conditions, 10,000 reads per sample.
+#### Example of graphical summary
 
-<img src="example.png" width="800px" style="display: block; margin: auto;" />
+Total number of mapped reads    |  Distribution of log10 number of reads, per sgRNA
+:-------------------------:|:-------------------------:
+![](data/output/plot_total_mapped_reads.png)  |  ![](data/output/plot_read_dist.png)
+
+Top 10 sgRNA mutants by read number    |  Volcano plot, log2 FC vs -log10 p-value
+:-------------------------:|:-------------------------:
+![](data/output/plot_top_barcodes.png)  |  ![](data/output/plot_volcano.png)
 
