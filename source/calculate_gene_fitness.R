@@ -143,6 +143,10 @@ if (length(unique(DESeq_result_table$time)) > 1) {
 #
 # Save result tables to output folder, in Rdata format
 cat("Saving 'all_counts.tsv', DESeq2_result.Rdata' and 'DESeq2_intermediate.Rdata' to", counts_dir, ".\n")
-write_tsv(df_counts, file = paste0(counts_dir, "all_counts.tsv"))
+if (packageVersion("readr") %>% substr(0,1) %>% as.numeric >= 2) {
+  write_tsv(df_counts, file = paste0(counts_dir, "all_counts.tsv"))
+} else {
+  write_tsv(df_counts, path = paste0(counts_dir, "all_counts.tsv"))
+}
 save(DESeq_result_table, file = paste0(counts_dir, "DESeq2_result.Rdata"))
 save(DESeq_result, file = paste0(counts_dir, "DESeq2_intermediate.Rdata"))
