@@ -150,7 +150,7 @@ if (length(unique(DESeq_result_table$time)) > 1) {
   DESeq_result_table <- DESeq_result_table %>%
     arrange(sgRNA, condition, time) %>%
     group_by(sgRNA, condition) %>%
-    mutate(fitness = DescTools::AUC(time, log2FoldChange)/max(time))
+    mutate(fitness = DescTools::AUC(time, log2FoldChange)/(max(time)/2))
 }
 
 # EXPORT PROCESSED DATA
