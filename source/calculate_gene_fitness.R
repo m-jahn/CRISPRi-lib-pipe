@@ -74,8 +74,8 @@ if (normalization != "none") {
   })
   counts <- as.data.frame(do.call(cbind, list_counts))
   counts <- mutate(counts, across(everything(), ~ round(replace(., . < 0, 0))))
+  counts <- counts[row.names(df_metadata)]
 }
-
 
 # DIFFERENTIAL ABUNDANCE
 # ======================
@@ -165,3 +165,4 @@ if (packageVersion("readr") %>% substr(0,1) %>% as.numeric >= 2) {
 }
 save(DESeq_result_table, file = paste0(counts_dir, "DESeq2_result.Rdata"))
 save(DESeq_result, file = paste0(counts_dir, "DESeq2_intermediate.Rdata"))
+
