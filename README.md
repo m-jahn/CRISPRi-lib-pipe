@@ -17,7 +17,7 @@ Pipeline to process CRISPRi library sequencing data
 - [sickle](https://github.com/najoshi/sickle),
   [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml), 
   and [samtools](http://www.htslib.org/doc/) >= 1.10
-- `R` >= 4.0, with packages `DESeq2`, `DescTools`, `Hmisc`, `tidyverse`
+- `R` >= 4.0, packages `DESeq2`, `DescTools`, `Hmisc`, `tidyverse`, `limma`
 - sequencing data in `fastq.gz` format (gzip compressed)
 - sgRNA library reference file in `fasta` format to assign reads
 
@@ -88,7 +88,12 @@ Example_S2_L001_R2.fastq.gz cond_B            2 2021-03-26     0     2          
 
 The entries in the `file_name` column correspond to the names of the `fastq.gz`/`counts.tsv` files. Two more columns are particularly important, `group` and `reference_group`. These columns define the condition to which each sample belongs, and to which this condition should be compared to, in order to obtain statistics like log2 fold change and p-value. The `time` column is used to calculate fitness score over a number of generations within one `condition`. Other `time` units are possible too as long as the input is numeric. If only one time point is supplied for all samples, fitness calculation is omitted. The zero time point should normally be identical with the reference condition.
 
-To run the analysis on a set of `counts.tsv` files, specify the input folder and the path to `metadata.tsv`. The main output from the pipeline are two tables in `.Rdata` format (memory-efficient), `DESeq2_result.Rdata` and `DESeq2_intermediate.Rdata`. The first one is the main result table containing the final statistics for desired comparisons. In addition, summary plots for number of reads per sample, per sgRNA, total quantified sgRNAs per sample, and a volcano plot for log2 FC versus negative log10 p-value are exported in `.png` and `.pdf` format. All files are saved to the folder specified with `--counts_dir`.
+The main output from the pipeline are two tables in `.Rdata` format (memory-efficient), `DESeq2_result.Rdata` and `DESeq2_intermediate.Rdata`. The first one is the main result table containing the final statistics for desired comparisons. In addition, summary plots for number of reads per sample, per sgRNA, total quantified sgRNAs per sample, and a volcano plot for log2 FC versus negative log10 p-value are exported in `.png` and `.pdf` format. All files are saved to the folder specified with `--counts_dir`. The script takes the following (optional) input parameters:
+
+- `metadata_dir` (default `./`)
+- `counts_dir` (default `./`)
+- `normalization` - optional argument to specify if count matrix should be normalized between conditions, but separated by time points. Possible values are `none` (default), `quantile` or `cyclicloess`. These are passed down to `normalizeBetweenArrays()` from package `limma`
+
 
 ```
 source/calculate_gene_fitness.sh --metadata_dir data/fastq/ --counts_dir data/output/

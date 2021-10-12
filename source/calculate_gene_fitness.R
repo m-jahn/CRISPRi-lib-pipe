@@ -10,18 +10,20 @@
 # LOAD PACKAGES
 # ====================
 #
-cat("Loading required R packges: DESeq2, DescTools, Hmisc, tidyverse.\n")
+cat("Loading required R packages: DESeq2, DescTools, Hmisc, tidyverse, limma.\n")
 suppressPackageStartupMessages({
   library(DESeq2)
   library(DescTools)
   library(Hmisc)
   library(tidyverse)
+  library(limma)
 })
 
 # supplied input directories
 args = commandArgs(trailingOnly = TRUE)
 metadata_dir <- args[1]
 counts_dir <- args[2]
+normalization <- args[3]
 
 # DATA PREPARATION
 # ====================
@@ -51,17 +53,10 @@ df_counts %>% group_by(sgRNA) %>%
   arrange(desc(sgRNAs_detected_in_samples)) %>%
   print
 
-# DIFFERENTIAL ABUNDANCE
+# NORMALIZATION
 # ======================
 #
-# DESeq2 can be used to obtain fold changes and significance metrics
-# for condition-wise comparisons, for details see publication:
-# Love, M.I., Huber, W., Anders, S. Genome Biology, 15:550, 2014.
-# (https://doi.org/10.1186/s13059-014-0550-8)
-cat("Running DESeq2 for pairwise comparison.\nWarning: this step can be time and computation-intense.\n")
-
-# 1. Read count matrix
-# data frame must be reshaped to a 'counts matrix' with genes as rows
+# input data frame must be reshaped to a 'counts matrix' with genes as rows
 # and samples (conditions) as columns.
 counts <- df_counts %>%
   # spread condition over columns and sgRNAs over rows
@@ -70,6 +65,26 @@ counts <- df_counts %>%
   mutate_at(vars(-1), function(x) coalesce(x, 0)) %>%
   # add row_names from column 
   column_to_rownames("sgRNA")
+
+# optional normalization using limma
+if (normalization != "none") {
+  list_counts <- lapply(unique(df_metadata$time), function(time_point) {
+    samples <- row.names(filter(df_metadata, time == time_point))
+    limma::normalizeBetweenArrays(as.matrix(counts[samples]), method = normalization)
+  })
+  counts <- as.data.frame(do.call(cbind, list_counts))
+  counts <- mutate(counts_norm, across(everything(), ~ round(replace(., . < 0, 0))))
+}
+
+
+# DIFFERENTIAL ABUNDANCE
+# ======================
+#
+# DESeq2 can be used to obtain fold changes and significance metrics
+# for condition-wise comparisons, for details see publication:
+# Love, M.I., Huber, W., Anders, S. Genome Biology, 15:550, 2014.
+# (https://doi.org/10.1186/s13059-014-0550-8)
+message("Running DESeq2 for pairwise comparison.\nNote: this step can be time and computation-intense.\n")
 
 # 2. Meta data
 # Meta data is required to carry out the actual DESeq2 analysis
@@ -142,7 +157,7 @@ if (length(unique(DESeq_result_table$time)) > 1) {
 # =====================
 #
 # Save result tables to output folder, in Rdata format
-cat("Saving 'all_counts.tsv', DESeq2_result.Rdata' and 'DESeq2_intermediate.Rdata' to", counts_dir, ".\n")
+message("Saving 'all_counts.tsv', DESeq2_result.Rdata' and 'DESeq2_intermediate.Rdata' to ", counts_dir, ".\n")
 if (packageVersion("readr") %>% substr(0,1) %>% as.numeric >= 2) {
   write_tsv(df_counts, file = paste0(counts_dir, "all_counts.tsv"))
 } else {
