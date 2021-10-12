@@ -73,7 +73,7 @@ if (normalization != "none") {
     limma::normalizeBetweenArrays(as.matrix(counts[samples]), method = normalization)
   })
   counts <- as.data.frame(do.call(cbind, list_counts))
-  counts <- mutate(counts_norm, across(everything(), ~ round(replace(., . < 0, 0))))
+  counts <- mutate(counts, across(everything(), ~ round(replace(., . < 0, 0))))
 }
 
 
