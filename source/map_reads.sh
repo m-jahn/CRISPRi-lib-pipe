@@ -7,7 +7,7 @@
 export input_dir=${input_dir:-"./"}
 export output_dir=${output_dir:-"./"}
 export pattern=${pattern:-".fastq.gz"}
-export read_length=${read_length:-75}
+export read_length=${read_length:-51}
 export ref_file=${ref_file:-"./ref/Synechocystis_v2.fasta"}
 
 # assign optional parameters that were passed with "--"

@@ -204,24 +204,26 @@ sudo apt install samtools</code></pre>
 <p>The data must then be converted to <code>*.fastq</code> (plain text) files using Illumina’s <code>bcl2fastq</code> tool. It is recommended to run it with option <code>--no-lane-splitting</code> in order to obtain one file per sample, instead of several files subdivided by lane. If it complains about indices being too similar to demultiplex, the option <code>--barcode-mismatches 0</code> can be added.</p>
 <pre><code>cd /your/target/directory/
 bcl2fastq --no-lane-splitting</code></pre>
-<p>The gzipped <code>*.fastq.gz</code> files will be stored in <code>./Data/Intensities/BaseCalls/</code>. To merge replicates of the same sample into a new <code>*.fastq.gz</code> file, run the following script. The script merges files matching a certain <code>pattern</code> into a single new file. Input and output folder can be specified with optional parameters (the default is current directory <code>./</code>). New file names are truncated to the part preceding the variable pattern (all characters trailing the pattern are ignored).</p>
+<p>The gzipped <code>*.fastq.gz</code> files will be stored in <code>./Data/Intensities/BaseCalls/</code>. To merge replicates of the same sample into a new <code>*.fastq.gz</code> file (usually not required!), run the following script. The script merges files matching a certain <code>pattern</code> into a single new file. Input and output folder can be specified with optional parameters (the default is current directory <code>./</code>). New file names are truncated to the part preceding the variable pattern (all characters trailing the pattern are ignored).</p>
 <ul>
 <li><code>input_dir</code> - input directory</li>
-<li><code>output_dir</code> - - output directory</li>
+<li><code>output_dir</code> - output directory</li>
 <li><code>file_ext</code> - file extension of the target files (default: <code>fastq.gz</code>)</li>
 <li><code>pattern</code> - all files matching this pattern will be merged (default: <code>_L00[1-4]_</code>)</li>
 </ul>
 <pre><code>source/merge_fastq_files.sh --input_dir data/fastq/ --output_dir data/fastq/ --pattern _R.</code></pre>
+<p><code>fastq.gz</code> files can be manually inspected in the terminal by using the following command. This can be useful to determine read length and format of the downloaded files.</p>
+<pre><code>zcat file.fastq.gz | head -n 1</code></pre>
 </div>
 <div id="step-2-pipeline-for-read-trimming-and-mapping-to-reference" class="section level4">
 <h4>Step 2: Pipeline for read trimming and mapping to reference</h4>
 <p>This script filters reads using <code>sickle</code>, and maps them to the sgRNA library reference. The script takes the following (optional) input parameters:</p>
 <ul>
-<li><code>input_dir</code> (default <code>./</code>)</li>
-<li><code>output_dir</code> (default <code>./</code>)</li>
-<li><code>pattern</code> – the file name pattern to look for (default <code>.fastq.gz</code>)</li>
-<li><code>read_length</code> – expected read length for <code>sickle</code> (default: <code>75</code>)</li>
-<li><code>ref_file</code> – reference library file for reads assignment (default: <code>./ref/Synechocystis_v2.fasta</code>)</li>
+<li><code>input_dir</code> - input directory (default <code>./</code>)</li>
+<li><code>output_dir</code> - output directory (default <code>./</code>)</li>
+<li><code>pattern</code> - the file name pattern to look for (default <code>.fastq.gz</code>)</li>
+<li><code>read_length</code> - expected read length for <code>sickle</code> (default: <code>51</code>)</li>
+<li><code>ref_file</code> - reference library file for reads assignment (default: <code>./ref/Synechocystis_v2.fasta</code>)</li>
 </ul>
 <p>The following example processes <code>fastq.gz</code> files from the <code>data/fastq/</code>) directory. Output are filtered <code>fastq.gz</code> files, <code>.bam</code> alignment files, and <code>counts.tsv</code> summary tables, one for each input file.</p>
 <pre><code>source/map_reads.sh --input_dir data/fastq/ --output_dir data/output/</code></pre>
@@ -239,8 +241,8 @@ Example_S2_L001_R2.fastq.gz cond_B            2 2021-03-26     0     2          
 <p>For an ideal gene depleting or enriching at a constant rate, the fitness score equals the log2 fold change at the final time point.</p>
 <p>The main output from the pipeline are two tables in <code>.Rdata</code> format (memory-efficient), <code>DESeq2_result.Rdata</code> and <code>DESeq2_intermediate.Rdata</code>. The first one is the main result table containing the final statistics for desired comparisons. In addition, summary plots for number of reads per sample, per sgRNA, total quantified sgRNAs per sample, and a volcano plot for log2 FC versus negative log10 p-value are exported in <code>.png</code> and <code>.pdf</code> format. All files are saved to the folder specified with <code>--counts_dir</code>. The script takes the following (optional) input parameters:</p>
 <ul>
-<li><code>metadata_dir</code> (default <code>./</code>)</li>
-<li><code>counts_dir</code> (default <code>./</code>)</li>
+<li><code>metadata_dir</code> - metadata directory (default <code>./</code>)</li>
+<li><code>counts_dir</code> - counts directory (default <code>./</code>)</li>
 <li><code>normalization</code> - optional argument to specify if count matrix should be normalized between conditions, but separated by time points. Possible values are <code>none</code> (default), <code>quantile</code> or <code>cyclicloess</code>. These are passed down to <code>normalizeBetweenArrays()</code> from package <code>limma</code></li>
 </ul>
 <pre><code>source/calculate_gene_fitness.sh --metadata_dir data/fastq/ --counts_dir data/output/</code></pre>

@@ -47,10 +47,10 @@ cd /your/target/directory/
 bcl2fastq --no-lane-splitting
 ```
 
-The gzipped `*.fastq.gz` files will be stored in `./Data/Intensities/BaseCalls/`. To merge replicates of the same sample into a new `*.fastq.gz` file, run the following script. The script merges files matching a certain `pattern` into a single new file. Input and output folder can be specified with optional parameters (the default is current directory `./`). New file names are truncated to the part preceding the variable pattern (all characters trailing the pattern are ignored).
+The gzipped `*.fastq.gz` files will be stored in `./Data/Intensities/BaseCalls/`. To merge replicates of the same sample into a new `*.fastq.gz` file (usually not required!), run the following script. The script merges files matching a certain `pattern` into a single new file. Input and output folder can be specified with optional parameters (the default is current directory `./`). New file names are truncated to the part preceding the variable pattern (all characters trailing the pattern are ignored).
 
 - `input_dir` - input directory
-- `output_dir` - - output directory
+- `output_dir` - output directory
 - `file_ext` - file extension of the target files (default: `fastq.gz`)
 - `pattern` - all files matching this pattern will be merged (default: `_L00[1-4]_`)
 
@@ -58,15 +58,22 @@ The gzipped `*.fastq.gz` files will be stored in `./Data/Intensities/BaseCalls/`
 source/merge_fastq_files.sh --input_dir data/fastq/ --output_dir data/fastq/ --pattern _R.
 ```
 
+`fastq.gz` files can be manually inspected in the terminal by using the following command. This can be useful
+to determine read length and format of the downloaded files.
+
+```
+zcat file.fastq.gz | head -n 1
+```
+
 #### Step 2: Pipeline for read trimming and mapping to reference
 
 This script filters reads using `sickle`, and maps them to the sgRNA library reference. The script takes the following (optional) input parameters:
 
-- `input_dir` (default `./`)
-- `output_dir` (default `./`)
-- `pattern` -- the file name pattern to look for (default `.fastq.gz`)
-- `read_length` -- expected read length for `sickle` (default: `75`)
-- `ref_file` -- reference library file for reads assignment (default: `./ref/Synechocystis_v2.fasta`)
+- `input_dir` - input directory (default `./`)
+- `output_dir` - output directory (default `./`)
+- `pattern` - the file name pattern to look for (default `.fastq.gz`)
+- `read_length` - expected read length for `sickle` (default: `51`)
+- `ref_file` - reference library file for reads assignment (default: `./ref/Synechocystis_v2.fasta`)
 
 The following example processes `fastq.gz` files from the `data/fastq/`) directory. Output are filtered `fastq.gz` files, `.bam` alignment files, and `counts.tsv` summary tables, one for each input file.
 
@@ -94,8 +101,8 @@ For an ideal gene depleting or enriching at a constant rate, the fitness score e
 
 The main output from the pipeline are two tables in `.Rdata` format (memory-efficient), `DESeq2_result.Rdata` and `DESeq2_intermediate.Rdata`. The first one is the main result table containing the final statistics for desired comparisons. In addition, summary plots for number of reads per sample, per sgRNA, total quantified sgRNAs per sample, and a volcano plot for log2 FC versus negative log10 p-value are exported in `.png` and `.pdf` format. All files are saved to the folder specified with `--counts_dir`. The script takes the following (optional) input parameters:
 
-- `metadata_dir` (default `./`)
-- `counts_dir` (default `./`)
+- `metadata_dir` -  metadata directory (default `./`)
+- `counts_dir` - counts directory (default `./`)
 - `normalization` - optional argument to specify if count matrix should be normalized between conditions, but separated by time points. Possible values are `none` (default), `quantile` or `cyclicloess`. These are passed down to `normalizeBetweenArrays()` from package `limma`
 
 
