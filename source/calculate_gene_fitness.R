@@ -10,7 +10,7 @@
 # LOAD PACKAGES
 # ====================
 #
-cat("Loading required R packages: DESeq2, DescTools, Hmisc, tidyverse, limma.\n")
+message("Loading required R packages: DESeq2, DescTools, Hmisc, tidyverse, limma.\n")
 suppressPackageStartupMessages({
   library(DESeq2)
   library(DescTools)
@@ -24,6 +24,8 @@ args = commandArgs(trailingOnly = TRUE)
 metadata_dir <- args[1]
 counts_dir <- args[2]
 normalization <- args[3]
+gene_fitness <- args[4]
+gene_sep <- args[5]
 
 # DATA PREPARATION
 # ====================
@@ -33,8 +35,9 @@ df_metadata <- read_tsv(paste0(metadata_dir, "metadata.tsv"), col_types = cols()
   mutate(file_name = gsub(".fastq.gz$", "", file_name)) %>%
   mutate(group = factor(`group`)) %>%
   column_to_rownames("file_name")
-cat("Input:", nrow(df_metadata), "files listed in meta data table.\n")
+message("Input: ", nrow(df_metadata), " files listed in meta data table.\n")
 stopifnot(is.numeric(df_metadata$time))
+n_timepoints <- length(unique(df_metadata$time))
 
 # Step 2: Load read counts
 df_counts <- lapply(row.names(df_metadata), function(x) {
@@ -45,7 +48,7 @@ df_counts <- lapply(row.names(df_metadata), function(x) {
   select(file_name, sgRNA, numreads)
 
 # print overview information to console
-cat("Number of sgRNAs detected in n samples:\n")
+message("Number of sgRNAs detected in n samples:\n")
 df_counts %>% group_by(sgRNA) %>%
   summarize(sgRNAs_detected_in_samples = sum(numreads > 0)) %>%
   count(sgRNAs_detected_in_samples) %>%
@@ -93,8 +96,6 @@ message("Running DESeq2 for pairwise comparison.\nNote: this step can be time an
 stopifnot(colnames(counts) == row.names(df_metadata))
 
 # 3. Perform DESeq2 analysis
-# WARNING: This step is computation-intense and can take several hours
-# for a large data set
 DESeq_result <- DESeqDataSetFromMatrix(
   countData = counts,
   colData = df_metadata,
@@ -136,7 +137,9 @@ DESeq_result_table <- select(df_metadata, -replicate) %>%
     lfcSE = replace_na(lfcSE, 0),
     pvalue = replace_na(pvalue, 1),
     padj = replace_na(padj, 1)
-  )
+  ) %>%
+  filter(!is.na(sgRNA))
+  
 
 # CALCULATE FITNESS SCORE
 # =======================
@@ -146,11 +149,59 @@ DESeq_result_table <- select(df_metadata, -replicate) %>%
 # in a negative score. The fitness score is normalized to the maximum time 
 # for a particular condition, and is therefore independent of the duration
 # of the cultivations. Requires at least 2 time points
-if (length(unique(DESeq_result_table$time)) > 1) {
+
+if (n_timepoints > 1) {
+  message("Calculating sgRNA fitness score.\n")
   DESeq_result_table <- DESeq_result_table %>%
     arrange(sgRNA, condition, time) %>%
     group_by(sgRNA, condition) %>%
     mutate(fitness = DescTools::AUC(time, log2FoldChange)/(max(time)/2))
+}
+
+# CALCULATE SGRNA CORRELATION AND EFFICIENCY
+# ==========================================
+#
+# Different sgRNAs per gene can have different repression efficiency.
+# To assess sgRNA quality, two metrics are added to the main table,
+# A) sgRNA correlation = Pearson correlation coeff. of each sgRNA with the others of same gene.
+#    A score between 0 and 1.
+# B) sgRNA efficiency = median absolute fitness of an sgRNA over all observations [conditions],
+#    divided by maximum fitness of an sgRNA. A score between 0 and 1.
+if (n_timepoints > 1 & as.logical(gene_fitness)) {
+  
+  DESeq_result_table <- slice(DESeq_result_table, 1:1000)
+  
+  message("Calculating sgRNA efficiency and correlation.\n")
+  determine_corr <- function(index, value, condition, time) {
+    # make correlation matrix
+    df <- data.frame(index = index, value = value, condition = condition, time = time)
+    cor_matrix <- pivot_wider(df, names_from = c("condition", "time"), values_from = value) %>%
+      arrange(index) %>% column_to_rownames("index") %>%
+    as.matrix %>% t %>% cor(method = "pearson")
+    # determine weights
+    weights <- cor_matrix %>% replace(., . == 1, NA) %>%
+      apply(2, function(x) median(x, na.rm = TRUE)) %>%
+      scales::rescale(from = c(-1, 1), to = c(0, 1)) %>%
+      enframe("index", "weight") %>% mutate(index = as.numeric(index)) %>%
+      mutate(weight = replace(weight, is.na(weight), 1))
+    # return vector of weights the same order and length 
+    # as sgRNA index vector
+    left_join(df, weights, by = "index") %>% pull(weight)
+  }
+  
+  DESeq_result_table <- DESeq_result_table %>%
+    # split sgRNA names into target gene and position
+    separate(sgRNA, into = c("sgRNA_target", "sgRNA_position"), sep = gene_sep,
+      remove = FALSE) %>%
+    group_by(sgRNA_target) %>%
+    mutate(
+      sgRNA_position = as.numeric(sgRNA_position),
+      sgRNA_index = sgRNA_position %>% as.factor %>% as.numeric) %>%
+    group_by(sgRNA_target) %>%
+    mutate(sgRNA_correlation = determine_corr(sgRNA_index,
+      log2FoldChange, condition, time)) %>%
+    mutate(sgRNA_efficiency = ave(fitness, sgRNA_position, FUN = function(x) median(abs(x))) %>%
+      {./max(.)})
 }
 
 # EXPORT PROCESSED DATA

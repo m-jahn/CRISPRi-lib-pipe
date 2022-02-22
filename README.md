@@ -104,6 +104,8 @@ The main output from the pipeline are two tables in `.Rdata` format (memory-effi
 - `metadata_dir` -  metadata directory (default `./`)
 - `counts_dir` - counts directory (default `./`)
 - `normalization` - optional argument to specify if count matrix should be normalized between conditions, but separated by time points. Possible values are `none` (default), `quantile` or `cyclicloess`. These are passed down to `normalizeBetweenArrays()` from package `limma`
+- `gene_fitness` - if sgRNA and gene fitness should be calculated or not (default: `False`). If `True` more than one time point must be provided (fitness is AUC of log2FC over time)
+- `gene_sep` - separator in sgRNA strings between sgRNA name and position (example: `abc|22` is separated by `\\|`, the default). Optional, only important in combination with `--gene_fitness True`
 
 
 ```

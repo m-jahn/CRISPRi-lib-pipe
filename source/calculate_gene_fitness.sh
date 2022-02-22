@@ -10,6 +10,8 @@
 metadata_dir=${metadata_dir:-"./"}
 counts_dir=${counts_dir:-"./"}
 normalization=${normalization:-"none"}
+gene_fitness=${gene_fitness:-"False"}
+gene_sep=${gene_sep:-"\\|"}
 
 # assign optional parameters that were passed with "--"
 while [ $# -gt 0 ]; do
@@ -21,7 +23,7 @@ while [ $# -gt 0 ]; do
 done
 
 # perform fitness calculation using the DESeq2 package from Love et al., Genome Biology, 2014
-Rscript source/calculate_gene_fitness.R ${metadata_dir} ${counts_dir} ${normalization}
+Rscript source/calculate_gene_fitness.R ${metadata_dir} ${counts_dir} ${normalization} ${gene_fitness} ${gene_sep}
 
 # this R script performs PCA and generates summary plots
 Rscript source/summary_plots.R ${counts_dir}

@@ -244,6 +244,8 @@ Example_S2_L001_R2.fastq.gz cond_B            2 2021-03-26     0     2          
 <li><code>metadata_dir</code> - metadata directory (default <code>./</code>)</li>
 <li><code>counts_dir</code> - counts directory (default <code>./</code>)</li>
 <li><code>normalization</code> - optional argument to specify if count matrix should be normalized between conditions, but separated by time points. Possible values are <code>none</code> (default), <code>quantile</code> or <code>cyclicloess</code>. These are passed down to <code>normalizeBetweenArrays()</code> from package <code>limma</code></li>
+<li><code>gene_fitness</code> - if sgRNA and gene fitness should be calculated or not (default: <code>False</code>). If <code>True</code> more than one time point must be provided (fitness is AUC of log2FC over time)</li>
+<li><code>gene_sep</code> - separator in sgRNA strings between sgRNA name and position (example: <code>abc|22</code> is separated by <code>\\|</code>, the default). Optional, only important in combination with <code>--gene_fitness True</code></li>
 </ul>
 <pre><code>source/calculate_gene_fitness.sh --metadata_dir data/fastq/ --counts_dir data/output/</code></pre>
 </div>
