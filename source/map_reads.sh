@@ -41,7 +41,7 @@ done
 # sickle options are:
 #  -f fastq input file; -o output file; se single-end;
 #  -l expected read length; -n trailing truncated sequences with Ns
-#  -t type of quality score; -g ??
+#  -t type of quality score; -g gzipped output files
 #
 # STEP 2: map reads to reference library file using bowtie2 and samtools
 # invoke bowtie2 to align reads to reference; useful options:
