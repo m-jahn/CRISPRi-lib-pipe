@@ -109,7 +109,7 @@ The main output from the pipeline are two tables in `.Rdata` format (memory-effi
 
 
 ```
-source/calculate_gene_fitness.sh --metadata_dir data/fastq/ --counts_dir data/output/
+source/calculate_gene_fitness.sh --metadata_dir data/fastq/ --counts_dir data/output/ --gene_fitness True
 ```
 
 #### Example of graphical summary

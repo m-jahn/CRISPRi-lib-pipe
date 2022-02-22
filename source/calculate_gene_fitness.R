@@ -139,7 +139,7 @@ DESeq_result_table <- select(df_metadata, -replicate) %>%
     padj = replace_na(padj, 1)
   ) %>%
   filter(!is.na(sgRNA))
-  
+
 
 # CALCULATE FITNESS SCORE
 # =======================
@@ -168,8 +168,6 @@ if (n_timepoints > 1) {
 # B) sgRNA efficiency = median absolute fitness of an sgRNA over all observations [conditions],
 #    divided by maximum fitness of an sgRNA. A score between 0 and 1.
 if (n_timepoints > 1 & as.logical(gene_fitness)) {
-  
-  DESeq_result_table <- slice(DESeq_result_table, 1:1000)
   
   message("Calculating sgRNA efficiency and correlation.\n")
   determine_corr <- function(index, value, condition, time) {
@@ -216,4 +214,3 @@ if (packageVersion("readr") %>% substr(0,1) %>% as.numeric >= 2) {
 }
 save(DESeq_result_table, file = paste0(counts_dir, "DESeq2_result.Rdata"))
 save(DESeq_result, file = paste0(counts_dir, "DESeq2_intermediate.Rdata"))
-
