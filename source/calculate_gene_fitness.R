@@ -129,7 +129,7 @@ DESeq_result_table <- lapply(combinations, function(l) {
 DESeq_result_table <- select(df_metadata, -replicate) %>% 
   distinct %>% as_tibble %>%
   full_join(DESeq_result_table, by = "group") %>%
-  
+  mutate(group = as.numeric(group)) %>%
   # complete missing combinations of variables, here mostly all log2FC
   # values (0) for the reference conditions
   complete(sgRNA, nesting(condition, date, time, group, reference_group)) %>%
@@ -199,6 +199,28 @@ if (n_timepoints > 1 & as.logical(gene_fitness)) {
       sgRNA_correlation = determine_corr(sgRNA_index, log2FoldChange, condition, time),
       sgRNA_efficiency = ave(fitness, sgRNA_position, FUN = function(x) median(abs(x))) %>%
       {./max(.)})
+}
+
+# SUMMARIZE SGRNA FITNESS TO GENE FITNESS
+# =======================================
+#
+# calculate gene fitness as weighted mean of sgRNA fitness, see README.md
+# for details and exatc formula
+if (n_timepoints > 1 & as.logical(gene_fitness)) {
+  
+  message("Calculating gene fitness and gene log2 fold change.")
+  DESeq_result_table <- left_join(DESeq_result_table,
+    DESeq_result_table %>%
+    group_by(sgRNA_target, condition, time) %>%
+  summarize(.groups = "drop",
+    # gene log2 FC
+    wmean_log2FoldChange = weighted.mean(log2FoldChange, sgRNA_correlation * sgRNA_efficiency),
+    sd_log2FoldChange = sd(log2FoldChange),
+    # gene fitness
+    wmean_fitness = weighted.mean(fitness, sgRNA_correlation * sgRNA_efficiency),
+    sd_fitness = sd(fitness)
+  ), by = c("sgRNA_target", "condition", "time"))
+  
 }
 
 # EXPORT PROCESSED DATA

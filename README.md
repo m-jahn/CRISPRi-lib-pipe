@@ -105,13 +105,42 @@ The main output from the pipeline is a table with statistics for each sgRNA. By 
 - `counts_dir` - counts directory (default `./`)
 - `normalization` - optional argument to specify if count matrix should be normalized between conditions, but separated by time points. Possible values are `none` (default), `quantile` or `cyclicloess`. These are passed down to `normalizeBetweenArrays()` from package `limma`
 - `gene_fitness` - if sgRNA and gene fitness should be calculated or not (default: `False`). If `True` more than one time point must be provided (fitness is AUC of log2FC over time)
-- `gene_sep` - separator in sgRNA strings between sgRNA name and position (example: `abc|22` is separated by `\\|`, the default). Optional, only important in combination with `--gene_fitness True`
+- `gene_sep` - separator in sgRNA strings between sgRNA name and position (example: `abc|22` is separated by the pipe operator `\\|`, the default). Optional, only important in combination with `--gene_fitness True`
 - `output_format` - File format for the final result table, can be one of `rdata` (the default), `csv` or `tsv`
-
 
 ```
 source/calculate_gene_fitness.sh --metadata_dir data/fastq/ --counts_dir data/output/ --gene_fitness True
 ```
+
+#### Expected output
+
+A table with the following columns.
+
+| Column        | Type        | Example  | Comment  |
+| ------------- | ----------- | -------  | -------  |
+| sgRNA | `chr` | `aat|111` | name of sgRNA as in `.fasta` reference |
+| sgRNA_target | `chr` | aat | name of sgRNA target gene |
+| sgRNA_position | `numeric` | 111 | position of sgRNA relative to target start |
+| condition | `chr` | example | experimental condition |
+| date | `chr` | 2021_01_09 | experiment date |
+| time | `numeric` | 0 | time / n generations, important for fitness calculation |
+| group | `numeric` | 1 | group number for sample |
+| reference_group | `numeric` | 1 | group number of reference for comparison  |
+| baseMean | `numeric` | `NA` | DESeq2 average number of reads for sgRNA |
+| log2FoldChange | `numeric` | 0 | DESeq2 log2 FC for sgRNA |
+| lfcSE | `numeric` | 0 | DESeq2 log2 FC error for sgRNA |
+| stat | `numeric` | `NA` | DESeq2 t statistic for sgRNA |
+| pvalue | `numeric` | 1 | DESeq2 p-value for sgRNA |
+| padj | `numeric` | 1 | DESeq2 adjusted p-value for sgRNA |
+| fitness | `numeric` | 2.020183 | fitness for sgRNA |
+| sgRNA_index | `numeric` | 4 | relative position of sgRNA |
+| sgRNA_correlation | `numeric` | 0.6247412 | correlation of sgRNA with others |
+| sgRNA_efficiency | `numeric` | 0.9893041 | relative repression efficiency of sgRNA |
+| wmean_log2FoldChange | `numeric` | 0 | weighted mean log2 FC for gene |
+| sd_log2FoldChange | `numeric` | 0 | standard deviation of log2 FC for gene |
+| wmean_fitness | `numeric` | 1.777574 | weighted mean fitness for gene |
+| sd_fitness | `numeric` | 0.9558989 | standard dev of fitness for gene |
+
 
 #### Example of graphical summary
 

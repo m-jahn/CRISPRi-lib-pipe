@@ -245,10 +245,158 @@ Example_S2_L001_R2.fastq.gz cond_B            2 2021-03-26     0     2          
 <li><code>counts_dir</code> - counts directory (default <code>./</code>)</li>
 <li><code>normalization</code> - optional argument to specify if count matrix should be normalized between conditions, but separated by time points. Possible values are <code>none</code> (default), <code>quantile</code> or <code>cyclicloess</code>. These are passed down to <code>normalizeBetweenArrays()</code> from package <code>limma</code></li>
 <li><code>gene_fitness</code> - if sgRNA and gene fitness should be calculated or not (default: <code>False</code>). If <code>True</code> more than one time point must be provided (fitness is AUC of log2FC over time)</li>
-<li><code>gene_sep</code> - separator in sgRNA strings between sgRNA name and position (example: <code>abc|22</code> is separated by <code>\\|</code>, the default). Optional, only important in combination with <code>--gene_fitness True</code></li>
+<li><code>gene_sep</code> - separator in sgRNA strings between sgRNA name and position (example: <code>abc|22</code> is separated by the pipe operator <code>\\|</code>, the default). Optional, only important in combination with <code>--gene_fitness True</code></li>
 <li><code>output_format</code> - File format for the final result table, can be one of <code>rdata</code> (the default), <code>csv</code> or <code>tsv</code></li>
 </ul>
 <pre><code>source/calculate_gene_fitness.sh --metadata_dir data/fastq/ --counts_dir data/output/ --gene_fitness True</code></pre>
+</div>
+<div id="expected-output" class="section level4">
+<h4>Expected output</h4>
+<p>A table with the following columns.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Column</th>
+<th>Type</th>
+<th>Example</th>
+<th>Comment</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>sgRNA</td>
+<td><code>chr</code></td>
+<td><code>aat|111</code></td>
+<td>name of sgRNA as in <code>.fasta</code> reference</td>
+</tr>
+<tr class="even">
+<td>sgRNA_target</td>
+<td><code>chr</code></td>
+<td>aat</td>
+<td>name of sgRNA target gene</td>
+</tr>
+<tr class="odd">
+<td>sgRNA_position</td>
+<td><code>numeric</code></td>
+<td>111</td>
+<td>position of sgRNA relative to target start</td>
+</tr>
+<tr class="even">
+<td>condition</td>
+<td><code>chr</code></td>
+<td>example</td>
+<td>experimental condition</td>
+</tr>
+<tr class="odd">
+<td>date</td>
+<td><code>chr</code></td>
+<td>2021_01_09</td>
+<td>experiment date</td>
+</tr>
+<tr class="even">
+<td>time</td>
+<td><code>numeric</code></td>
+<td>0</td>
+<td>time / n generations, important for fitness calculation</td>
+</tr>
+<tr class="odd">
+<td>group</td>
+<td><code>numeric</code></td>
+<td>1</td>
+<td>group number for sample</td>
+</tr>
+<tr class="even">
+<td>reference_group</td>
+<td><code>numeric</code></td>
+<td>1</td>
+<td>group number of reference for comparison</td>
+</tr>
+<tr class="odd">
+<td>baseMean</td>
+<td><code>numeric</code></td>
+<td><code>NA</code></td>
+<td>DESeq2 average number of reads for sgRNA</td>
+</tr>
+<tr class="even">
+<td>log2FoldChange</td>
+<td><code>numeric</code></td>
+<td>0</td>
+<td>DESeq2 log2 FC for sgRNA</td>
+</tr>
+<tr class="odd">
+<td>lfcSE</td>
+<td><code>numeric</code></td>
+<td>0</td>
+<td>DESeq2 log2 FC error for sgRNA</td>
+</tr>
+<tr class="even">
+<td>stat</td>
+<td><code>numeric</code></td>
+<td><code>NA</code></td>
+<td>DESeq2 t statistic for sgRNA</td>
+</tr>
+<tr class="odd">
+<td>pvalue</td>
+<td><code>numeric</code></td>
+<td>1</td>
+<td>DESeq2 p-value for sgRNA</td>
+</tr>
+<tr class="even">
+<td>padj</td>
+<td><code>numeric</code></td>
+<td>1</td>
+<td>DESeq2 adjusted p-value for sgRNA</td>
+</tr>
+<tr class="odd">
+<td>fitness</td>
+<td><code>numeric</code></td>
+<td>2.020183</td>
+<td>fitness for sgRNA</td>
+</tr>
+<tr class="even">
+<td>sgRNA_index</td>
+<td><code>numeric</code></td>
+<td>4</td>
+<td>relative position of sgRNA</td>
+</tr>
+<tr class="odd">
+<td>sgRNA_correlation</td>
+<td><code>numeric</code></td>
+<td>0.6247412</td>
+<td>correlation of sgRNA with others</td>
+</tr>
+<tr class="even">
+<td>sgRNA_efficiency</td>
+<td><code>numeric</code></td>
+<td>0.9893041</td>
+<td>relative repression efficiency of sgRNA</td>
+</tr>
+<tr class="odd">
+<td>wmean_log2FoldChange</td>
+<td><code>numeric</code></td>
+<td>0</td>
+<td>weighted mean log2 FC for gene</td>
+</tr>
+<tr class="even">
+<td>sd_log2FoldChange</td>
+<td><code>numeric</code></td>
+<td>0</td>
+<td>standard deviation of log2 FC for gene</td>
+</tr>
+<tr class="odd">
+<td>wmean_fitness</td>
+<td><code>numeric</code></td>
+<td>1.777574</td>
+<td>weighted mean fitness for gene</td>
+</tr>
+<tr class="even">
+<td>sd_fitness</td>
+<td><code>numeric</code></td>
+<td>0.9558989</td>
+<td>standard dev of fitness for gene</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="example-of-graphical-summary" class="section level4">
 <h4>Example of graphical summary</h4>
