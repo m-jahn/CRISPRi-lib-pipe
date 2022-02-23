@@ -99,13 +99,14 @@ $F_g = \frac{AUC(t, log_2 FC)}{max(t)/2}$
 
 For an ideal gene depleting or enriching at a constant rate, the fitness score equals the log2 fold change at the final time point. 
 
-The main output from the pipeline are two tables in `.Rdata` format (memory-efficient), `DESeq2_result.Rdata` and `DESeq2_intermediate.Rdata`. The first one is the main result table containing the final statistics for desired comparisons. In addition, summary plots for number of reads per sample, per sgRNA, total quantified sgRNAs per sample, and a volcano plot for log2 FC versus negative log10 p-value are exported in `.png` and `.pdf` format. All files are saved to the folder specified with `--counts_dir`. The script takes the following (optional) input parameters:
+The main output from the pipeline is a table with statistics for each sgRNA. By default, the `Rdata` format is chosen for its memory efficiency (`DESeq2_result.Rdata`). Additionally, summary plots for number of reads per sample, per sgRNA, total quantified sgRNAs per sample, and a volcano plot for log2 FC versus negative log10 p-value are exported in `.png` and `.pdf` format. All files are saved to the folder specified with `--counts_dir`. The script takes the following (optional) input parameters:
 
 - `metadata_dir` -  metadata directory (default `./`)
 - `counts_dir` - counts directory (default `./`)
 - `normalization` - optional argument to specify if count matrix should be normalized between conditions, but separated by time points. Possible values are `none` (default), `quantile` or `cyclicloess`. These are passed down to `normalizeBetweenArrays()` from package `limma`
 - `gene_fitness` - if sgRNA and gene fitness should be calculated or not (default: `False`). If `True` more than one time point must be provided (fitness is AUC of log2FC over time)
 - `gene_sep` - separator in sgRNA strings between sgRNA name and position (example: `abc|22` is separated by `\\|`, the default). Optional, only important in combination with `--gene_fitness True`
+- `output_format` - File format for the final result table, can be one of `rdata` (the default), `csv` or `tsv`
 
 
 ```

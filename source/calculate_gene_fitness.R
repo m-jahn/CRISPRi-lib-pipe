@@ -10,7 +10,7 @@
 # LOAD PACKAGES
 # ====================
 #
-message("Loading required R packages: DESeq2, DescTools, Hmisc, tidyverse, limma.\n")
+message("Loading required R packages: DESeq2, DescTools, Hmisc, tidyverse, limma.")
 suppressPackageStartupMessages({
   library(DESeq2)
   library(DescTools)
@@ -26,6 +26,7 @@ counts_dir <- args[2]
 normalization <- args[3]
 gene_fitness <- args[4]
 gene_sep <- args[5]
+output_format <- args[6]
 
 # DATA PREPARATION
 # ====================
@@ -35,7 +36,7 @@ df_metadata <- read_tsv(paste0(metadata_dir, "metadata.tsv"), col_types = cols()
   mutate(file_name = gsub(".fastq.gz$", "", file_name)) %>%
   mutate(group = factor(`group`)) %>%
   column_to_rownames("file_name")
-message("Input: ", nrow(df_metadata), " files listed in meta data table.\n")
+message("Input: ", nrow(df_metadata), " files listed in meta data table.")
 stopifnot(is.numeric(df_metadata$time))
 n_timepoints <- length(unique(df_metadata$time))
 
@@ -48,7 +49,7 @@ df_counts <- lapply(row.names(df_metadata), function(x) {
   select(file_name, sgRNA, numreads)
 
 # print overview information to console
-message("Number of sgRNAs detected in n samples:\n")
+message("Number of sgRNAs detected in n samples:")
 df_counts %>% group_by(sgRNA) %>%
   summarize(sgRNAs_detected_in_samples = sum(numreads > 0)) %>%
   count(sgRNAs_detected_in_samples) %>%
@@ -87,7 +88,7 @@ if (normalization != "none") {
 # for condition-wise comparisons, for details see publication:
 # Love, M.I., Huber, W., Anders, S. Genome Biology, 15:550, 2014.
 # (https://doi.org/10.1186/s13059-014-0550-8)
-message("Running DESeq2 for pairwise comparison.\nNote: this step can be time and computation-intense.\n")
+message("Running DESeq2 for pairwise comparison.\nNote: this step can be time and computation-intense.")
 
 # 2. Meta data
 # Meta data is required to carry out the actual DESeq2 analysis
@@ -151,7 +152,7 @@ DESeq_result_table <- select(df_metadata, -replicate) %>%
 # of the cultivations. Requires at least 2 time points
 
 if (n_timepoints > 1) {
-  message("Calculating sgRNA fitness score.\n")
+  message("Calculating sgRNA fitness score.")
   DESeq_result_table <- DESeq_result_table %>%
     arrange(sgRNA, condition, time) %>%
     group_by(sgRNA, condition) %>%
@@ -169,7 +170,7 @@ if (n_timepoints > 1) {
 #    divided by maximum fitness of an sgRNA. A score between 0 and 1.
 if (n_timepoints > 1 & as.logical(gene_fitness)) {
   
-  message("Calculating sgRNA efficiency and correlation.\n")
+  message("Calculating sgRNA efficiency and correlation.")
   determine_corr <- function(index, value, condition, time) {
     # make correlation matrix
     df <- data.frame(index = index, value = value, condition = condition, time = time)
@@ -194,11 +195,9 @@ if (n_timepoints > 1 & as.logical(gene_fitness)) {
     group_by(sgRNA_target) %>%
     mutate(
       sgRNA_position = as.numeric(sgRNA_position),
-      sgRNA_index = sgRNA_position %>% as.factor %>% as.numeric) %>%
-    group_by(sgRNA_target) %>%
-    mutate(sgRNA_correlation = determine_corr(sgRNA_index,
-      log2FoldChange, condition, time)) %>%
-    mutate(sgRNA_efficiency = ave(fitness, sgRNA_position, FUN = function(x) median(abs(x))) %>%
+      sgRNA_index = sgRNA_position %>% as.factor %>% as.numeric,
+      sgRNA_correlation = determine_corr(sgRNA_index, log2FoldChange, condition, time),
+      sgRNA_efficiency = ave(fitness, sgRNA_position, FUN = function(x) median(abs(x))) %>%
       {./max(.)})
 }
 
@@ -206,11 +205,19 @@ if (n_timepoints > 1 & as.logical(gene_fitness)) {
 # =====================
 #
 # Save result tables to output folder, in Rdata format
-message("Saving 'all_counts.tsv', DESeq2_result.Rdata' and 'DESeq2_intermediate.Rdata' to ", counts_dir, ".\n")
+message("Saving 'all_counts.tsv' to ", counts_dir, ".")
 if (packageVersion("readr") %>% substr(0,1) %>% as.numeric >= 2) {
   write_tsv(df_counts, file = paste0(counts_dir, "all_counts.tsv"))
 } else {
   write_tsv(df_counts, path = paste0(counts_dir, "all_counts.tsv"))
 }
-save(DESeq_result_table, file = paste0(counts_dir, "DESeq2_result.Rdata"))
-save(DESeq_result, file = paste0(counts_dir, "DESeq2_intermediate.Rdata"))
+if (output_format == "rdata") {
+  message("Saving 'DESeq2_result.Rdata' to ", counts_dir, ".")
+  save(DESeq_result_table, file = paste0(counts_dir, "DESeq2_result.Rdata"))
+} else if (output_format == "tsv") {
+  message("Saving 'DESeq2_result.tsv' to ", counts_dir, ".")
+  write_tsv(DESeq_result_table, file = paste0(counts_dir, "DESeq2_result.tsv"))
+} else if (output_format == "csv") {
+  message("Saving 'DESeq2_result.csv' to ", counts_dir, ".")
+  write_csv(DESeq_result_table, file = paste0(counts_dir, "DESeq2_result.csv"))
+}

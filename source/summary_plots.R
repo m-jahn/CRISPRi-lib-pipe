@@ -7,7 +7,7 @@
 # LOAD PACKAGES
 # ====================
 #
-cat("Loading required R packges: tidyverse, ggrepel, scales.\n")
+message("Loading required R packges: tidyverse, ggrepel, scales.")
 suppressPackageStartupMessages({
   library(tidyverse)
   library(ggrepel)
@@ -183,8 +183,8 @@ save_plots <- function(pl) {
   dev.off()
 }
 
-cat("Saving plots to", args[1], ".\n")
+message("Saving plots to ", args[1], ".")
 for (pl in grep(pattern = "^plot\\_", ls(), value = TRUE)) {
   save_plots(pl)
 }
-cat(" ---------------------------------\n", "Export of plots completed.\n")
+message("---------------------------------\n", "Export of plots completed.")
