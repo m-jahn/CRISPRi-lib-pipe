@@ -10,13 +10,13 @@
 # LOAD PACKAGES
 # ====================
 #
-message("Loading required R packages: DESeq2, DescTools, Hmisc, tidyverse, limma.")
+message("Loading required R packages: DESeq2, DescTools, tidyverse, limma, scales.")
 suppressPackageStartupMessages({
   library(DESeq2)
   library(DescTools)
-  library(Hmisc)
   library(tidyverse)
   library(limma)
+  library(scales)
 })
 
 # supplied input directories

@@ -17,7 +17,7 @@ Pipeline to process CRISPRi library sequencing data
 - [sickle](https://github.com/najoshi/sickle),
   [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml), 
   and [samtools](http://www.htslib.org/doc/) >= 1.10
-- `R` >= 4.0, packages `DESeq2`, `DescTools`, `Hmisc`, `tidyverse`, `limma`
+- `R` >= 4.0, packages `DESeq2`, `DescTools`, `tidyverse`, `limma`,`scales`
 - sequencing data in `fastq.gz` format (gzip compressed)
 - sgRNA library reference file in `fasta` format to assign reads
 
