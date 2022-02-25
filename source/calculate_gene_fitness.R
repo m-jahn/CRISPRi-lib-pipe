@@ -10,13 +10,13 @@
 # LOAD PACKAGES
 # ====================
 #
-message("Loading required R packages: DESeq2, DescTools, tidyverse, limma, scales.")
+message("Loading required R packages: DESeq2, DescTools, limma, scales, tidyverse.")
 suppressPackageStartupMessages({
   library(DESeq2)
   library(DescTools)
-  library(tidyverse)
   library(limma)
   library(scales)
+  library(tidyverse)
 })
 
 # supplied input directories
@@ -32,29 +32,29 @@ output_format <- args[6]
 # ====================
 #
 # Step 1: Load sample layout sheet - file names must be row names
-df_metadata <- read_tsv(paste0(metadata_dir, "metadata.tsv"), col_types = cols()) %>%
-  mutate(file_name = gsub(".fastq.gz$", "", file_name)) %>%
-  mutate(group = factor(`group`)) %>%
-  column_to_rownames("file_name")
+df_metadata <- readr::read_tsv(paste0(metadata_dir, "metadata.tsv"), col_types = cols()) %>%
+  dplyr::mutate(file_name = gsub(".fastq.gz$", "", file_name)) %>%
+  dplyr::mutate(group = factor(`group`)) %>%
+  tibble::column_to_rownames("file_name")
 message("Input: ", nrow(df_metadata), " files listed in meta data table.")
 stopifnot(is.numeric(df_metadata$time))
 n_timepoints <- length(unique(df_metadata$time))
 
 # Step 2: Load read counts
 df_counts <- lapply(row.names(df_metadata), function(x) {
-  read_tsv(paste0(counts_dir, x, "_counts.tsv"), col_types = cols())}) %>%
+  readr::read_tsv(paste0(counts_dir, x, "_counts.tsv"), col_types = cols())}) %>%
   set_names(row.names(df_metadata)) %>%
-  bind_rows(.id = "file_name") %>%
-  rename(sgRNA = `#rname`) %>%
-  select(file_name, sgRNA, numreads)
+  dplyr::bind_rows(.id = "file_name") %>%
+  dplyr::rename(sgRNA = `#rname`) %>%
+  dplyr::select(file_name, sgRNA, numreads)
 
 # print overview information to console
 message("Number of sgRNAs detected in n samples:")
 df_counts %>% group_by(sgRNA) %>%
-  summarize(sgRNAs_detected_in_samples = sum(numreads > 0)) %>%
-  count(sgRNAs_detected_in_samples) %>%
-  mutate(percent_total = n/sum(n)*100) %>%
-  arrange(desc(sgRNAs_detected_in_samples)) %>%
+  dplyr::summarize(sgRNAs_detected_in_samples = sum(numreads > 0)) %>%
+  dplyr::count(sgRNAs_detected_in_samples) %>%
+  dplyr::mutate(percent_total = n/sum(n)*100) %>%
+  dplyr::arrange(dplyr::desc(sgRNAs_detected_in_samples)) %>%
   print
 
 # NORMALIZATION
@@ -64,11 +64,11 @@ df_counts %>% group_by(sgRNA) %>%
 # and samples (conditions) as columns.
 counts <- df_counts %>%
   # spread condition over columns and sgRNAs over rows
-  pivot_wider(names_from = file_name, values_from = numreads) %>%
+  tidyr::pivot_wider(names_from = file_name, values_from = numreads) %>%
   # remove sgRNA column, replace NA with 0
-  mutate_at(vars(-1), function(x) coalesce(x, 0)) %>%
+  dplyr::mutate_at(vars(-1), function(x) coalesce(x, 0)) %>%
   # add row_names from column 
-  column_to_rownames("sgRNA")
+  tibble::column_to_rownames("sgRNA")
 
 # optional normalization using limma
 if (normalization != "none") {
@@ -77,7 +77,7 @@ if (normalization != "none") {
     limma::normalizeBetweenArrays(as.matrix(counts[samples]), method = normalization)
   })
   counts <- as.data.frame(do.call(cbind, list_counts))
-  counts <- mutate(counts, across(everything(), ~ round(replace(., . < 0, 0))))
+  counts <- dplyr::mutate(counts, dplyr::across(everything(), ~ round(replace(., . < 0, 0))))
   counts <- counts[row.names(df_metadata)]
 }
 
@@ -110,36 +110,37 @@ DESeq_result <- DESeqDataSetFromMatrix(
 # contrasts `contrast("variable", "level1", "level2")`. To automate this, 
 # a list of condition and reference pairs is set up from meta data
 combinations <- df_metadata %>%
-  select(group, reference_group) %>%
-  filter(group != reference_group) %>%
-  mutate(across(.cols = everything(), .fns = as.character)) %>%
-  distinct %>% as.list %>% transpose
+  dplyr::select(group, reference_group) %>%
+  dplyr::filter(group != reference_group) %>%
+  dplyr::mutate(across(.cols = everything(), .fns = as.character)) %>%
+  dplyr::distinct() %>% as.list %>% transpose
 
 # extract results for desired combinations
 DESeq_result_table <- lapply(combinations, function(l) {
-  results(DESeq_result, contrast = c("group", l$group, l$reference_group),
+  DESeq2::results(DESeq_result, contrast = c("group", l$group, l$reference_group),
     parallel = TRUE, tidy = TRUE) %>% 
-    as_tibble %>% mutate(group = l$group) %>% rename(sgRNA = row)
-  }) %>% bind_rows
+    tibble::as_tibble() %>% dplyr::mutate(group = l$group) %>%
+    dplyr::rename(sgRNA = row)
+  }) %>% dplyr::bind_rows()
 
 # MERGE DESEQ RESULTS
 # ======================
 #
 # merge DESeq result table with meta data
-DESeq_result_table <- select(df_metadata, -replicate) %>% 
-  distinct %>% as_tibble %>%
-  full_join(DESeq_result_table, by = "group") %>%
-  mutate(group = as.numeric(group)) %>%
+DESeq_result_table <- dplyr::select(df_metadata, -replicate) %>% 
+  dplyr::distinct() %>% tibble::as_tibble() %>%
+  dplyr::full_join(DESeq_result_table, by = "group") %>%
+  dplyr::mutate(group = as.numeric(group)) %>%
   # complete missing combinations of variables, here mostly all log2FC
   # values (0) for the reference conditions
-  complete(sgRNA, nesting(condition, date, time, group, reference_group)) %>%
-  mutate(
+  tidyr::complete(sgRNA, tidyr::nesting(condition, date, time, group, reference_group)) %>%
+  dplyr::mutate(
     log2FoldChange = replace_na(log2FoldChange, 0),
     lfcSE = replace_na(lfcSE, 0),
     pvalue = replace_na(pvalue, 1),
     padj = replace_na(padj, 1)
   ) %>%
-  filter(!is.na(sgRNA))
+  dplyr::filter(!is.na(sgRNA))
 
 
 # CALCULATE FITNESS SCORE
@@ -154,9 +155,9 @@ DESeq_result_table <- select(df_metadata, -replicate) %>%
 if (n_timepoints > 1) {
   message("Calculating sgRNA fitness score.")
   DESeq_result_table <- DESeq_result_table %>%
-    arrange(sgRNA, condition, time) %>%
-    group_by(sgRNA, condition) %>%
-    mutate(fitness = DescTools::AUC(time, log2FoldChange)/(max(time)/2))
+    dplyr::arrange(sgRNA, condition, time) %>%
+    dplyr::group_by(sgRNA, condition) %>%
+    dplyr::mutate(fitness = DescTools::AUC(time, log2FoldChange)/(max(time)/2))
 }
 
 # CALCULATE SGRNA CORRELATION AND EFFICIENCY
@@ -174,26 +175,26 @@ if (n_timepoints > 1 & as.logical(gene_fitness)) {
   determine_corr <- function(index, value, condition, time) {
     # make correlation matrix
     df <- data.frame(index = index, value = value, condition = condition, time = time)
-    cor_matrix <- pivot_wider(df, names_from = c("condition", "time"), values_from = value) %>%
-      arrange(index) %>% column_to_rownames("index") %>%
-    as.matrix %>% t %>% cor(method = "pearson")
+    cor_matrix <- tidyr::pivot_wider(df, names_from = c("condition", "time"), values_from = value) %>%
+      dplyr::arrange(index) %>% tibble::column_to_rownames("index") %>%
+    as.matrix %>% t %>% stats::cor(method = "pearson")
     # determine weights
     weights <- cor_matrix %>% replace(., . == 1, NA) %>%
       apply(2, function(x) median(x, na.rm = TRUE)) %>%
       scales::rescale(from = c(-1, 1), to = c(0, 1)) %>%
-      enframe("index", "weight") %>% mutate(index = as.numeric(index)) %>%
-      mutate(weight = replace(weight, is.na(weight), 1))
+      tibble::enframe("index", "weight") %>% dplyr::mutate(index = as.numeric(index)) %>%
+      dplyr::mutate(weight = replace(weight, is.na(weight), 1))
     # return vector of weights the same order and length 
     # as sgRNA index vector
-    left_join(df, weights, by = "index") %>% pull(weight)
+    dplyr::left_join(df, weights, by = "index") %>% pull(weight)
   }
   
   DESeq_result_table <- DESeq_result_table %>%
     # split sgRNA names into target gene and position
-    separate(sgRNA, into = c("sgRNA_target", "sgRNA_position"), sep = gene_sep,
+    tidyr::separate(sgRNA, into = c("sgRNA_target", "sgRNA_position"), sep = gene_sep,
       remove = FALSE) %>%
-    group_by(sgRNA_target) %>%
-    mutate(
+    dplyr::group_by(sgRNA_target) %>%
+    dplyr::mutate(
       sgRNA_position = as.numeric(sgRNA_position),
       sgRNA_index = sgRNA_position %>% as.factor %>% as.numeric,
       sgRNA_correlation = determine_corr(sgRNA_index, log2FoldChange, condition, time),
@@ -209,17 +210,19 @@ if (n_timepoints > 1 & as.logical(gene_fitness)) {
 if (n_timepoints > 1 & as.logical(gene_fitness)) {
   
   message("Calculating gene fitness and gene log2 fold change.")
-  DESeq_result_table <- left_join(DESeq_result_table,
+  DESeq_result_table <- dplyr::left_join(
+    DESeq_result_table,
     DESeq_result_table %>%
-    group_by(sgRNA_target, condition, time) %>%
-  summarize(.groups = "drop",
-    # gene log2 FC
-    wmean_log2FoldChange = weighted.mean(log2FoldChange, sgRNA_correlation * sgRNA_efficiency),
-    sd_log2FoldChange = sd(log2FoldChange),
-    # gene fitness
-    wmean_fitness = weighted.mean(fitness, sgRNA_correlation * sgRNA_efficiency),
-    sd_fitness = sd(fitness)
-  ), by = c("sgRNA_target", "condition", "time"))
+    dplyr::group_by(sgRNA_target, condition, time) %>%
+    dplyr::summarize(.groups = "drop",
+      # gene log2 FC
+      wmean_log2FoldChange = weighted.mean(log2FoldChange, sgRNA_correlation * sgRNA_efficiency),
+      sd_log2FoldChange = sd(log2FoldChange),
+      # gene fitness
+      wmean_fitness = weighted.mean(fitness, sgRNA_correlation * sgRNA_efficiency),
+      sd_fitness = sd(fitness)
+    ), by = c("sgRNA_target", "condition", "time")
+  )
   
 }
 
@@ -229,17 +232,18 @@ if (n_timepoints > 1 & as.logical(gene_fitness)) {
 # Save result tables to output folder, in Rdata format
 message("Saving 'all_counts.tsv' to ", counts_dir, ".")
 if (packageVersion("readr") %>% substr(0,1) %>% as.numeric >= 2) {
-  write_tsv(df_counts, file = paste0(counts_dir, "all_counts.tsv"))
+  readr::write_tsv(df_counts, file = paste0(counts_dir, "all_counts.tsv"))
 } else {
-  write_tsv(df_counts, path = paste0(counts_dir, "all_counts.tsv"))
+  readr::write_tsv(df_counts, path = paste0(counts_dir, "all_counts.tsv"))
 }
 if (output_format == "rdata") {
   message("Saving 'DESeq2_result.Rdata' to ", counts_dir, ".")
   save(DESeq_result_table, file = paste0(counts_dir, "DESeq2_result.Rdata"))
 } else if (output_format == "tsv") {
   message("Saving 'DESeq2_result.tsv' to ", counts_dir, ".")
-  write_tsv(DESeq_result_table, file = paste0(counts_dir, "DESeq2_result.tsv"))
+  readr::write_tsv(DESeq_result_table, file = paste0(counts_dir, "DESeq2_result.tsv"))
 } else if (output_format == "csv") {
   message("Saving 'DESeq2_result.csv' to ", counts_dir, ".")
-  write_csv(DESeq_result_table, file = paste0(counts_dir, "DESeq2_result.csv"))
+  readr::write_csv(DESeq_result_table, file = paste0(counts_dir, "DESeq2_result.csv"))
 }
+

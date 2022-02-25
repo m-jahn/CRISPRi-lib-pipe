@@ -27,5 +27,5 @@ done
 Rscript source/calculate_gene_fitness.R ${metadata_dir} ${counts_dir} \
   ${normalization} ${gene_fitness} ${gene_sep} ${output_format}
 
-# this R script performs PCA and generates summary plots
-Rscript source/summary_plots.R ${counts_dir}
+# this R script generates summary plots
+Rscript source/summary_plots.R ${counts_dir} ${output_format}
