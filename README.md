@@ -4,7 +4,10 @@ Michael Jahn, Kiyan Shabestary
 
 ### Description
 
-Pipeline to process CRISPRi library sequencing data
+Pipeline to process CRISPRi library sequencing data.
+
+<!-- header image -->
+![](CRISPRi_lib_principle.png)
 
 ### Related publications
 
