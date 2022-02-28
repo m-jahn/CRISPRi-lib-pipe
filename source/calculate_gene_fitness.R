@@ -126,6 +126,19 @@ DESeq_result_table <- lapply(combinations, function(l) {
 # MERGE DESEQ RESULTS
 # ======================
 #
+# complete metadata table with missing time zero conditions for the cases
+# where samples are used as zero time points for _multiple_ different conditions
+if (!all(df_metadata %>% dplyr::group_by(condition) %>%
+  summarize(zero_cond = 0 %in% time) %>%
+  pull(zero_cond))
+) {
+  df_metadata <- bind_rows(
+    df_metadata,
+    df_metadata %>% tidyr::complete(condition, tidyr::nesting(date, time)) %>%
+    filter(is.na(group), time == 0)
+  )
+}
+
 # merge DESeq result table with meta data
 DESeq_result_table <- dplyr::select(df_metadata, -replicate) %>% 
   dplyr::distinct() %>% tibble::as_tibble() %>%
@@ -206,7 +219,7 @@ if (n_timepoints > 1 & as.logical(gene_fitness)) {
 # =======================================
 #
 # calculate gene fitness as weighted mean of sgRNA fitness, see README.md
-# for details and exatc formula
+# for details and exact formula
 if (n_timepoints > 1 & as.logical(gene_fitness)) {
   
   message("Calculating gene fitness and gene log2 fold change.")
