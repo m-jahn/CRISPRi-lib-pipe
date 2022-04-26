@@ -19,7 +19,7 @@ Pipeline to process CRISPRi library sequencing data.
 - `bcl2fastq` for NGS file conversion (optional)
 - [sickle](https://github.com/najoshi/sickle),
   [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml), 
-  and [samtools](http://www.htslib.org/doc/) >= 1.10
+  and [samtools](http://www.htslib.org/doc/) >= 1.14
 - `R` >= 4.0, packages `DESeq2`, `DescTools`, `tidyverse`, `limma`,`scales`
 - sequencing data in `fastq.gz` format (gzip compressed)
 - sgRNA library reference file in `fasta` format to assign reads
@@ -31,6 +31,8 @@ sudo apt install sickle
 sudo apt install bowtie2
 sudo apt install samtools
 ```
+
+**Important note: A bug in the outdated samtools version 1.10 available through apt leads to false calculation of read numbers. It is recommended to install the LATEST versions of bowtie2 and samtools from their respective repositories.**
 
 ### Usage
 
